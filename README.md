@@ -18,6 +18,11 @@ semilla/
 └── docs/            # Documentation
 ```
 
+## Documentación
+
+- **[Pool Architecture](./docs/POOL_ARCHITECTURE.md)** - Arquitectura, ejemplos y flujo completo
+- **[Deployment](./docs/DEPLOYMENT.md)** - Instrucciones para deploy a Scroll Sepolia
+
 ## Getting Started
 (Coming soon)
 
