@@ -1,0 +1,21 @@
+{
+  "name": "semilla",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Decentralized microcredit protocol using ZK proofs on Scroll",
+  "scripts": {
+    "contracts:build": "forge build",
+    "contracts:test": "forge test -vv",
+    "contracts:test:gas": "forge test --gas-report",
+    "contracts:clean": "forge clean",
+    "contracts:format": "forge fmt",
+    "contracts:lint": "solhint 'contracts/src/**/*.sol'",
+    "contracts:deploy": "forge script contracts/script/Deploy.s.sol:Deploy --rpc-url $SCROLL_RPC_URL --broadcast --verify",
+    "contracts:deploy:local": "forge script contracts/script/Deploy.s.sol:Deploy --fork-url http://localhost:8545 --broadcast"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "forge-std": "^1.7.0",
+    "solhint": "^4.0.0"
+  }
+}
