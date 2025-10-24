@@ -4,6 +4,7 @@
 .env.*.local
 
 # Foundry
+cache/
 forge-cache/
 contracts/out/
 contracts/cache/
