@@ -53,7 +53,7 @@ export function LoanRepaymentCard({
   useEffect(() => {
     if (isSuccess) {
       setToast({
-        message: `✓ Préstamo reembolsado exitosamente. Intereses distribuidos.`,
+        message: `Préstamo reembolsado exitosamente. Intereses distribuidos.`,
         type: 'success',
       })
     }

@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useAccount } from 'wagmi'
 import { Address } from 'viem'
 import Tooltip from './Tooltip'
-import { useDeposit, useLoanRequest } from '../hooks/usePoolWrite'
+import { useDeposit, useLoanRequest, useRepayLoan } from '../hooks/usePoolWrite'
+import { useUserLoanInfo } from '../hooks/useUserData'
 import { Toast, ToastType } from './Toast'
 
 interface Pool {
@@ -28,8 +29,10 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
   const { isConnected } = useAccount()
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [showBorrowModal, setShowBorrowModal] = useState(false)
+  const [showRepayModal, setShowRepayModal] = useState(false)
   const [depositAmount, setDepositAmount] = useState('')
   const [borrowAmount, setBorrowAmount] = useState('')
+  const [repayAmount, setRepayAmount] = useState('')
   const [estimatedDays, setEstimatedDays] = useState(30)
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
   
@@ -38,6 +41,13 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
   
   // Loan request hook
   const { createLoan: requestLoan, isPending: isLoanPending, isSuccess: isLoanSuccess } = useLoanRequest(poolAddress)
+  
+  // Repay loan hook
+  const { repayLoan, isPending: isRepayPending, isSuccess: isRepaySuccess } = useRepayLoan(poolAddress)
+  
+  // Check for active loan
+  const { data: loanData } = useUserLoanInfo(poolAddress)
+  const hasActiveLoan = loanData && loanData.principal > 0n && loanData.status === 'active'
 
   const calculateEarnings = (amount: number, days: number, apr: number) => {
     if (!amount || amount <= 0) return 0
@@ -68,14 +78,17 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
           {compact ? 'Depositar' : '💰 Depositar'}
         </button>
         <button
-          onClick={() => setShowBorrowModal(true)}
+          onClick={() => hasActiveLoan ? setShowRepayModal(true) : setShowBorrowModal(true)}
           className={size === 'large'
-            ? 'flex-1 px-4 py-4 bg-accent text-dark rounded-lg font-semibold text-lg hover:bg-opacity-90 transition'
+            ? `flex-1 px-4 py-4 text-dark rounded-lg font-semibold text-lg hover:bg-opacity-90 transition ${hasActiveLoan ? 'bg-red-500' : 'bg-accent'}`
             : compact
-              ? 'px-3 py-2 bg-accent text-dark rounded-lg font-semibold text-sm hover:bg-opacity-90 transition whitespace-nowrap'
-              : 'flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition'}
+              ? `px-3 py-2 text-dark rounded-lg font-semibold text-sm hover:bg-opacity-90 transition whitespace-nowrap ${hasActiveLoan ? 'bg-red-500' : 'bg-accent'}`
+              : `flex-1 px-4 py-2 text-dark rounded-lg font-semibold hover:bg-opacity-90 transition ${hasActiveLoan ? 'bg-red-500' : 'bg-accent'}`}
         >
-          {compact ? 'Préstamo' : '📋 Solicitar Préstamo'}
+          {hasActiveLoan 
+            ? (compact ? 'Pagar' : '💳 Pagar Préstamo')
+            : (compact ? 'Préstamo' : '📋 Solicitar Préstamo')
+          }
         </button>
       </div>
 
@@ -161,7 +174,7 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
                   setDepositAmount('')
                   setEstimatedDays(30)
                   setToast({
-                    message: `✓ Depósito de ${depositAmount} ${pool.asset} realizado exitosamente`,
+                    message: ` Depósito de ${depositAmount} ${pool.asset} realizado exitosamente`,
                     type: 'success',
                   })
                 }
@@ -286,7 +299,7 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
                   setBorrowAmount('')
                   setEstimatedDays(30)
                   setToast({
-                    message: `✓ Solicitud de préstamo por ${borrowAmount} ${pool.asset} enviada al jury. Espera la aprobación.`,
+                    message: ` Solicitud de préstamo por ${borrowAmount} ${pool.asset} enviada al jury. Espera la aprobación.`,
                     type: 'success',
                   })
                 }
@@ -295,6 +308,106 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
               className="flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoanPending ? 'Solicitando...' : 'Solicitar'}
+            </button>
+          </div>
+        </div>
+      </div>
+      )}
+      
+      {showRepayModal && (
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        onClick={() => setShowRepayModal(false)}
+      >
+        <div 
+          className="bg-white rounded-lg p-8 max-w-md w-full mx-4"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-primary">Pagar Préstamo</h2>
+            <button
+              onClick={() => setShowRepayModal(false)}
+              disabled={isRepayPending}
+              className="text-gray-400 hover:text-gray-600 disabled:opacity-50 text-2xl"
+            >
+              ✕
+            </button>
+          </div>
+          
+          {loanData && (
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-semibold text-primary mb-3 text-sm">📊 Detalles del Préstamo Activo</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Principal:</span>
+                  <span className="font-semibold">{loanData.principal.toString()} wei</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Interés Acumulado:</span>
+                  <span className="font-semibold text-blue-600">{loanData.accruedInterest.toString()} wei</span>
+                </div>
+                <div className="border-t border-blue-200 pt-2 flex justify-between">
+                  <span className="font-semibold">Total a Pagar:</span>
+                  <span className="font-semibold text-lg text-blue-600">
+                    {(loanData.principal + loanData.accruedInterest).toString()} wei
+                  </span>
+                </div>
+                <div className="text-xs text-gray-600 mt-2">
+                  Vencimiento: {new Date(Number(loanData.dueDate) * 1000).toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-dark mb-2">Monto a Pagar ({pool.asset})</label>
+            <input
+              type="number"
+              step="0.01"
+              value={repayAmount}
+              onChange={e => setRepayAmount(e.target.value)}
+              placeholder="0.00"
+              disabled={isRepayPending}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary disabled:bg-gray-100"
+            />
+            <p className="text-xs text-gray-600 mt-1">Ingresa el monto total a reembolsar (principal + interés)</p>
+          </div>
+          
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setShowRepayModal(false)
+                setRepayAmount('')
+              }}
+              disabled={isRepayPending}
+              className="flex-1 px-4 py-2 bg-gray-200 text-dark rounded-lg font-semibold hover:bg-gray-300 transition disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={async () => {
+                if (!isConnected) {
+                  alert('Por favor conecta tu wallet')
+                  return
+                }
+                if (!repayAmount || parseFloat(repayAmount) <= 0) {
+                  alert('Por favor ingresa un monto válido')
+                  return
+                }
+                await repayLoan(repayAmount)
+                if (isRepaySuccess) {
+                  setShowRepayModal(false)
+                  setRepayAmount('')
+                  setToast({
+                    message: ` Préstamo de ${repayAmount} ${pool.asset} pagado exitosamente`,
+                    type: 'success',
+                  })
+                }
+              }}
+              disabled={isRepayPending}
+              className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isRepayPending ? 'Pagando...' : 'Pagar'}
             </button>
           </div>
         </div>

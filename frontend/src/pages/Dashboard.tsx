@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import ConnectWallet from '../components/ConnectWallet'
-import Tooltip from '../components/Tooltip'
+import EarningsSummary from '../components/EarningsSummary'
+import DepositCard from '../components/DepositCard'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 
 interface UserDeposit {
@@ -21,18 +22,18 @@ interface UserLoan {
   dueDate: string
 }
 
-// Mock data - TODO: Replace with contract calls
+// Mock data - TODO: Replace with contract calls when pools are created
 const mockDeposits: UserDeposit[] = [
   {
     poolName: 'Microcrédito Lima',
-    asset: 'USDC',
+    asset: 'ETH',
     amount: 5000,
     interestEarned: 245,
     apr: 8,
   },
   {
     poolName: 'Crédito Cusco',
-    asset: 'USX',
+    asset: 'ETH',
     amount: 2000,
     interestEarned: 65,
     apr: 7,
@@ -42,7 +43,7 @@ const mockDeposits: UserDeposit[] = [
 const mockLoans: UserLoan[] = [
   {
     poolName: 'Microcrédito Lima',
-    asset: 'USDC',
+    asset: 'ETH',
     amount: 3000,
     interestOwed: 150,
     status: 'active',
@@ -53,6 +54,7 @@ const mockLoans: UserLoan[] = [
 export default function Dashboard() {
   const navigate = useNavigate()
   const { address, isConnected } = useAccount()
+  const deposits = mockDeposits
 
   if (!isConnected) {
     return (
@@ -79,8 +81,8 @@ export default function Dashboard() {
     )
   }
 
-  const totalDeposited = mockDeposits.reduce((sum, d) => sum + d.amount, 0)
-  const totalInterestEarned = mockDeposits.reduce((sum, d) => sum + d.interestEarned, 0)
+  const totalDeposited = deposits.reduce((sum, d) => sum + d.amount, 0)
+  const totalInterestEarned = deposits.reduce((sum, d) => sum + d.interestEarned, 0)
   const totalBorrowed = mockLoans.reduce((sum, l) => sum + l.amount, 0)
   const totalInterestOwed = mockLoans.reduce((sum, l) => sum + l.interestOwed, 0)
   const netBalance = totalDeposited + totalInterestEarned - totalBorrowed - totalInterestOwed
@@ -116,19 +118,19 @@ export default function Dashboard() {
           <p className="text-gray-600">Aquí está un resumen de tu actividad en Semilla</p>
         </div>
 
+        {/* Earnings Summary */}
+        <div className="mb-6">
+          <EarningsSummary 
+            totalDeposited={totalDeposited} 
+            totalInterests={totalInterestEarned}
+          />
+        </div>
+
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <p className="text-sm text-gray-600 mb-2">Balance Neto</p>
             <p className="text-3xl font-bold text-primary">${netBalance.toLocaleString()}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <p className="text-sm text-gray-600 mb-2">Total Depositado</p>
-            <p className="text-3xl font-bold text-green-600">${totalDeposited.toLocaleString()}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <p className="text-sm text-gray-600 mb-2">Intereses Ganados</p>
-            <p className="text-3xl font-bold text-green-600">+${totalInterestEarned.toLocaleString()}</p>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <p className="text-sm text-gray-600 mb-2">Total Adeudado</p>
@@ -139,29 +141,29 @@ export default function Dashboard() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Portfolio Breakdown */}
-          {mockDeposits.length > 0 && (
+          {deposits.length > 0 && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-bold text-primary mb-4">Composición del Portfolio</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
-                    data={mockDeposits.map(d => ({
+                    data={deposits.map(d => ({
                       name: d.poolName,
                       value: d.amount,
                     }))}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${name}: $${value}`}
+                    label={({ value }) => typeof value === 'number' ? `$${value.toFixed(2)}` : '$0.00'}
                     outerRadius={60}
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {mockDeposits.map((_, index) => (
+                    {deposits.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={['#22c55e', '#3b82f6', '#f59e0b'][index % 3]} />
                     ))}
                   </Pie>
-                  <RechartsTooltip formatter={(value) => `$${value}`} />
+                  <RechartsTooltip formatter={(val) => `$${typeof val === 'number' ? val.toFixed(2) : '0.00'}`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -203,42 +205,20 @@ export default function Dashboard() {
           {/* Deposits */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-bold text-primary mb-6">Tus Depósitos</h3>
-            {mockDeposits.length === 0 ? (
+            {deposits.length === 0 ? (
               <p className="text-gray-600 text-center py-8">No tienes depósitos yet</p>
             ) : (
               <div className="space-y-5">
-                {mockDeposits.map((deposit, idx) => (
-                  <div key={idx} className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="font-bold text-green-900">{deposit.poolName}</h4>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-green-700">Bruto</span>
-                          <span className="text-sm font-bold text-green-700 bg-white rounded px-2 py-1">{deposit.apr}%</span>
-                          <Tooltip text="APR total del pool">
-                            <span className="inline-flex items-center justify-center w-3 h-3 text-xs font-bold text-white bg-green-600 rounded-full cursor-help">?</span>
-                          </Tooltip>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-green-700">Neto</span>
-                          <span className="text-sm font-bold text-green-600 bg-white rounded px-2 py-1">{(deposit.apr * 0.7).toFixed(2)}%</span>
-                          <Tooltip text="Tu parte real (70% del APR bruto)">
-                            <span className="inline-flex items-center justify-center w-3 h-3 text-xs font-bold text-white bg-green-600 rounded-full cursor-help">?</span>
-                          </Tooltip>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-white rounded p-2">
-                        <p className="text-xs text-gray-600">Depositado</p>
-                        <p className="font-bold text-green-600">${deposit.amount.toLocaleString()}</p>
-                      </div>
-                      <div className="bg-white rounded p-2">
-                        <p className="text-xs text-gray-600">Interés</p>
-                        <p className="font-bold text-green-600">+${deposit.interestEarned.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
+                {deposits.map((deposit, idx) => (
+                  <DepositCard
+                    key={idx}
+                    mockData={{
+                      poolName: deposit.poolName,
+                      amount: deposit.amount,
+                      interestEarned: deposit.interestEarned,
+                      apr: deposit.apr,
+                    }}
+                  />
                 ))}
               </div>
             )}

@@ -1,14 +1,33 @@
 import { Address } from 'viem'
 
 // Contract addresses
-const poolRegistry = import.meta.env.VITE_POOL_REGISTRY_ADDRESS || '0x5FbDB2315678afecb367f032d93F642f64180aa3'
-const lendingFactory = import.meta.env.VITE_LENDING_FACTORY_ADDRESS || '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
-const identityVerifier = import.meta.env.VITE_IDENTITY_VERIFIER_ADDRESS || '0x9fE46736679d2D9a88020340A6BA7b3d4d6AB08a'
+const poolRegistry = import.meta.env.VITE_POOL_REGISTRY_ADDRESS || '0xaCe24dE83154FEb175D725503DE8a862aEf2Af94'
+const lendingFactory = import.meta.env.VITE_LENDING_FACTORY_ADDRESS || '0x0ABFbe9D3a56436e54A7176872EaDc493a2ba9E3'
+const identityVerifier = import.meta.env.VITE_IDENTITY_VERIFIER_ADDRESS || '0xd4E6B563a9b3F99BB878c858a48EE359499d700f'
+
+// Token addresses
+const mockUSDC = import.meta.env.VITE_MOCK_USDC_ADDRESS || '0x6eBdAA7ddA08ed8FC5E8E7cb2F4F01F3EA97D5Ea'
+const mockUSX = import.meta.env.VITE_MOCK_USX_ADDRESS || '0x652A8701AdFDD419c19415f0abe8B5E97eAeb72a'
+
+// Debug: log all addresses
+console.log('📋 Contract Configuration Loaded:')
+console.log('  POOL_REGISTRY:', poolRegistry)
+console.log('  LENDING_FACTORY:', lendingFactory)
+console.log('  IDENTITY_VERIFIER:', identityVerifier)
+console.log('  TOKENS.USDC:', mockUSDC)
+console.log('  TOKENS.USX:', mockUSX)
+console.log('  TOKENS.ETH: 0x0000000000000000000000000000000000000000')
 
 export const CONTRACTS = {
   POOL_REGISTRY: poolRegistry as Address,
   LENDING_FACTORY: lendingFactory as Address,
   IDENTITY_VERIFIER: identityVerifier as Address,
+}
+
+export const TOKENS = {
+  USDC: mockUSDC as Address,
+  USX: mockUSX as Address,
+  ETH: '0x0000000000000000000000000000000000000000' as Address,
 }
 
 // Pool Registry ABI

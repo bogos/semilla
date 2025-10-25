@@ -1,3 +1,4 @@
+import React from 'react'
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { LENDING_POOL_ABI, LENDING_FACTORY_ABI, CONTRACTS } from '../config/contracts'
 import { Address, parseEther } from 'viem'
@@ -149,6 +150,9 @@ export function useCreatePool() {
   const { writeContract, data: hash, isPending, error } = useWriteContract()
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
+    query: {
+      retry: 1, // Only retry once to avoid too many reverts
+    },
   })
 
   const createPool = (
@@ -159,16 +163,37 @@ export function useCreatePool() {
     isERC20: boolean = true
   ) => {
     try {
+      console.log('🔗 Calling writeContract with:', {
+        address: CONTRACTS.LENDING_FACTORY,
+        functionName: 'createPool',
+        args: [name, asset, apr, rifCoverageBp, isERC20],
+        gas: 3000000n,
+      })
       writeContract({
         address: CONTRACTS.LENDING_FACTORY,
         abi: LENDING_FACTORY_ABI,
         functionName: 'createPool',
-        args: [name, asset, BigInt(apr), BigInt(rifCoverageBp) as any, isERC20],
+        args: [name, asset, apr, rifCoverageBp, isERC20],
+        gas: 3000000n, // High gas limit for pool creation (~2.15M in tests)
       })
     } catch (err) {
-      console.error('Error al crear pool:', err)
+      console.error('❌ Error al crear pool:', err)
     }
   }
+
+  // Log errors whenever they occur
+  React.useEffect(() => {
+    if (error) {
+      console.error('🚨 useCreatePool error state:', error)
+    }
+  }, [error])
+
+  // Log hash when transaction is sent
+  React.useEffect(() => {
+    if (hash) {
+      console.log('✅ Transaction sent with hash:', hash)
+    }
+  }, [hash])
 
   return {
     createPool,

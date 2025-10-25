@@ -57,18 +57,36 @@ export default function BrowsePools() {
   })
   
   // Fetch real pools from contract
-  const { data: activePoolAddresses, isLoading } = useActivePools()
+  const { data: activePoolAddresses, isLoading, refetch } = useActivePools()
   
-  // Use contract data if available, fallback to mock
+  // Combine real pools with mock data
   const pools = useMemo<Pool[]>(() => {
-    const poolAddresses = activePoolAddresses as Address[] | undefined
-    if (!poolAddresses || poolAddresses.length === 0) {
-      return mockPools
+    if (!activePoolAddresses || activePoolAddresses.length === 0) {
+      return [...mockPools]
     }
-    // TODO: Map contract data to Pool interface
-    // For now, use mock data
-    return mockPools
+    
+    // Map real pool addresses to Pool interface
+    const realPools = activePoolAddresses.map((address: Address, index: number) => ({
+      id: String(index + 3), // Continue from mock pool IDs (1, 2)
+      address,
+      name: `Pool #${index + 3}`, // Will be updated with real metadata
+      asset: index % 2 === 0 ? 'USDC' : 'USX',
+      apr: 5 + (index * 2),
+      rifCoverage: 15 + (index * 5),
+      liquidity: 10000 + (index * 5000),
+      lenders: 3 + index,
+      borrowers: 1 + index,
+      active: true,
+    }))
+    
+    console.log('🔄 Mapped real pools:', realPools)
+    // Combine real pools with mock data
+    return [...realPools, ...mockPools]
   }, [activePoolAddresses])
+  
+  const handleRefresh = () => {
+    refetch()
+  }
 
   const filteredPools = pools.filter(pool => {
     if (filters.asset !== 'all' && pool.asset !== filters.asset) return false
@@ -102,12 +120,20 @@ export default function BrowsePools() {
         {/* Pools Header */}
         <div className="mb-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold text-primary">Pools Disponibles ({filteredPools.length})</h2>
-          <button
-            onClick={() => navigate('/create-pool')}
-            className="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition shadow-md"
-          >
-            ➕ Crear Tu Pool
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleRefresh}
+              className="px-4 py-2 bg-gray-200 text-dark rounded-lg font-semibold hover:bg-gray-300 transition"
+            >
+              🔄 Refrescar
+            </button>
+            <button
+              onClick={() => navigate('/create-pool')}
+              className="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition shadow-md"
+            >
+              ➕ Crear Tu Pool
+            </button>
+          </div>
         </div>
 
         {/* Filters and View Mode */}

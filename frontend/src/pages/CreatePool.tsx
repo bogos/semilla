@@ -6,6 +6,7 @@ import ConnectWallet from '../components/ConnectWallet'
 import Tooltip from '../components/Tooltip'
 import { useCreatePool } from '../hooks/usePoolWrite'
 import { Toast, ToastType } from '../components/Toast'
+import { TOKENS } from '../config/contracts'
 
 export default function CreatePool() {
   const navigate = useNavigate()
@@ -26,11 +27,25 @@ export default function CreatePool() {
   useEffect(() => {
     if (isSuccess && hash) {
       setToast({
-        message: `✓ Pool creado exitosamente! Hash: ${hash.slice(0, 10)}...`,
+        message: `Pool creado exitosamente! Hash: ${hash.slice(0, 10)}...`,
         type: 'success',
       })
+      // Reset form after 2 seconds
+      const timer = setTimeout(() => {
+        setFormData({
+          name: '',
+          asset: 'USDC',
+          apr: 8,
+          rifCoverage: 20,
+          description: '',
+          imageUrl: '',
+        })
+        navigate('/pools')
+      }, 2000)
+      return () => clearTimeout(timer)
     }
-  }, [isSuccess, hash])
+    return
+  }, [isSuccess, hash, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,15 +60,24 @@ export default function CreatePool() {
       let isERC20 = false
       
       if (formData.asset === 'USDC') {
-        assetAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' // Sepolia USDC
+        assetAddress = TOKENS.USDC
         isERC20 = true
       } else if (formData.asset === 'USX') {
-        assetAddress = '0x0000000000000000000000000000000000000001' // Placeholder
+        assetAddress = TOKENS.USX
         isERC20 = true
+      } else if (formData.asset === 'ETH') {
+        assetAddress = TOKENS.ETH
+        isERC20 = false
       }
-      // ETH stays as 0x0 and isERC20 = false
       
-      await createPool(
+      console.log('🚀 Creating Pool with params:', {
+        name: formData.name,
+        asset: assetAddress,
+        apr: formData.apr,
+        rifCoverageBp: formData.rifCoverage * 100,
+        isERC20,
+      })
+      createPool(
         formData.name,
         assetAddress,
         formData.apr,

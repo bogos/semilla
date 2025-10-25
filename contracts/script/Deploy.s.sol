@@ -39,17 +39,24 @@ contract Deploy is Script {
         console.log("6. MockUSX deployed at:", address(mockUSX));
         
         // Step 6: Whitelist Assets in Factory
-        // ETH is native (0x0)
-        address ethAddress = address(0);
-        lendingFactory.whitelistAsset(ethAddress);
-        console.log("7. ETH whitelisted");
+        // Note: ETH (0x0) is handled specially in createPool() and doesn't need whitelist
         
         // Whitelist ERC20 tokens
         lendingFactory.whitelistAsset(address(mockUSDC));
-        console.log("8. MockUSDC whitelisted at:", address(mockUSDC));
+        console.log("7. MockUSDC whitelisted at:", address(mockUSDC));
         
         lendingFactory.whitelistAsset(address(mockUSX));
-        console.log("9. MockUSX whitelisted at:", address(mockUSX));
+        console.log("8. MockUSX whitelisted at:", address(mockUSX));
+        
+        // Step 7: Mint tokens to deployer
+        address walletAddress = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        uint256 amount = 100000 * 10**6; // 100,000 tokens with 6 decimals
+        
+        mockUSDC.mint(walletAddress, amount);
+        console.log("9. Minted 100,000 MockUSDC to:", walletAddress);
+        
+        mockUSX.mint(walletAddress, amount);
+        console.log("10. Minted 100,000 MockUSX to:", walletAddress);
         
         console.log("\n=== Deployment Complete ===");
         console.log("\nContract Addresses:");

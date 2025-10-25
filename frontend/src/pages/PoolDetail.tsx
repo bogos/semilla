@@ -92,7 +92,27 @@ export default function PoolDetail() {
   const { poolId } = useParams()
   const [copiedAddress, setCopiedAddress] = useState(false)
 
-  const pool = poolId ? mockPoolsDetail[poolId] : null
+  // Try to get pool from mock data first, then create a minimal pool object from address
+  let pool = poolId ? mockPoolsDetail[poolId] : null
+  
+  if (!pool && poolId) {
+    // Create a minimal pool object from the contract address
+    console.log('🔍 Pool not in mock data, creating from address:', poolId)
+    pool = {
+      id: poolId,
+      name: `Pool ${poolId.slice(0, 6)}...${poolId.slice(-4)}`,
+      asset: 'USDC', // Default
+      apr: 8,
+      rifCoverage: 20,
+      liquidity: 0,
+      lenders: 0,
+      borrowers: 0,
+      active: true,
+      owner: '0x...',
+      description: 'Loading pool details from contract...',
+      address: poolId,
+    }
+  }
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(pool?.address || '')

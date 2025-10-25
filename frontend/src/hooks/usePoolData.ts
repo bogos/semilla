@@ -1,3 +1,4 @@
+import React from 'react'
 import { useReadContract } from 'wagmi'
 import { LENDING_POOL_ABI, POOL_REGISTRY_ABI, CONTRACTS } from '../config/contracts'
 import { Address } from 'viem'
@@ -15,7 +16,7 @@ export interface PoolData {
  * Fetch all active pools from the registry
  */
 export function useActivePools() {
-  return useReadContract({
+  const result = useReadContract({
     address: CONTRACTS.POOL_REGISTRY,
     abi: POOL_REGISTRY_ABI,
     functionName: 'getActivePools',
@@ -26,6 +27,18 @@ export function useActivePools() {
       refetchOnReconnect: false,
     },
   })
+  
+  // Debug logging
+  React.useEffect(() => {
+    if (result.isSuccess && result.data) {
+      console.log('📚 Active Pools:', result.data)
+    }
+    if (result.isError) {
+      console.error('❌ Error fetching active pools:', result.error)
+    }
+  }, [result.data, result.isSuccess, result.isError, result.error])
+  
+  return result
 }
 
 /**
