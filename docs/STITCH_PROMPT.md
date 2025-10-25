@@ -309,7 +309,7 @@ Semilla es un protocolo de microcrédit descentralizado en Scroll blockchain. Pe
 
 ## Notas de Implementación
 
-- **Framework**: Next.js + Tailwind CSS (para bentobox fácil)
+- **Framework**: Vite + React + TypeScript + Tailwind CSS (para bentobox fácil)
 - **Grid system**: Tailwind `grid-cols-*` para bentobox
 - **Responsive**: Use Tailwind breakpoints (md:, lg:, xl:)
 - **Loading**: Skeleton loaders en lugar de content
