@@ -43,7 +43,6 @@ contract PoolRegistry is Ownable {
     }
     
     constructor(address _factory) Ownable(msg.sender) {
-        require(_factory != address(0), "Invalid factory");
         factory = _factory;
     }
     
