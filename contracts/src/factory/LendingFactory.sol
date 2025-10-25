@@ -86,16 +86,21 @@ contract LendingFactory is Ownable {
     function createPool(
         string memory name,
         address asset,
+        uint256 apr,
         uint16 rifCoverageBp
     ) external returns (address poolAddress) {
         require(factoryEnabled, "Factory disabled");
         require(supportedAssets[asset], "Asset not whitelisted");
+        require(apr > 0 && apr <= 100, "Invalid APR");
         require(rifCoverageBp <= 10000, "Invalid RIF coverage");
         require(bytes(name).length > 0, "Name required");
         
         // Deploy new LendingPool
         LendingPool newPool = new LendingPool();
         poolAddress = address(newPool);
+        
+        // Initialize pool with configuration
+        newPool.initialize(name, asset, msg.sender, apr, rifCoverageBp);
         
         // Store configuration
         allPools.push(poolAddress);

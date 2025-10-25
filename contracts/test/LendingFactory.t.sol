@@ -102,7 +102,8 @@ contract LendingFactoryTest is Test {
         address poolAddress = factory.createPool(
             "Test Pool",
             address(usdc),
-            2000 // 20% RIF coverage
+            8,    // 8% APR
+            2000  // 20% RIF coverage
         );
         
         assertTrue(factory.isPool(poolAddress));
@@ -122,7 +123,7 @@ contract LendingFactoryTest is Test {
         address unknownAsset = address(0x999);
         
         vm.expectRevert("Asset not whitelisted");
-        factory.createPool("Test Pool", unknownAsset, 2000);
+        factory.createPool("Test Pool", unknownAsset, 8, 2000);
         
         vm.stopPrank();
     }
@@ -131,7 +132,7 @@ contract LendingFactoryTest is Test {
         vm.startPrank(poolCreator);
         
         vm.expectRevert("Invalid RIF coverage");
-        factory.createPool("Test Pool", address(usdc), 15000); // > 10000
+        factory.createPool("Test Pool", address(usdc), 8, 15000); // > 10000
         
         vm.stopPrank();
     }
@@ -143,15 +144,15 @@ contract LendingFactoryTest is Test {
         
         vm.startPrank(poolCreator);
         vm.expectRevert("Factory disabled");
-        factory.createPool("Test Pool", address(usdc), 2000);
+        factory.createPool("Test Pool", address(usdc), 8, 2000);
         vm.stopPrank();
     }
     
     function testGetAllPools() public {
         vm.startPrank(poolCreator);
         
-        address pool1 = factory.createPool("Pool 1", address(usdc), 1000);
-        address pool2 = factory.createPool("Pool 2", address(usdc), 2000);
+        address pool1 = factory.createPool("Pool 1", address(usdc), 8, 1000);
+        address pool2 = factory.createPool("Pool 2", address(usdc), 7, 2000);
         
         address[] memory allPools = factory.getAllPools();
         assertEq(allPools.length, 2);
@@ -165,9 +166,9 @@ contract LendingFactoryTest is Test {
         vm.startPrank(poolCreator);
         
         assertEq(factory.getPoolCount(), 0);
-        factory.createPool("Pool 1", address(usdc), 1000);
+        factory.createPool("Pool 1", address(usdc), 8, 1000);
         assertEq(factory.getPoolCount(), 1);
-        factory.createPool("Pool 2", address(usdc), 2000);
+        factory.createPool("Pool 2", address(usdc), 6, 2000);
         assertEq(factory.getPoolCount(), 2);
         
         vm.stopPrank();
@@ -177,12 +178,12 @@ contract LendingFactoryTest is Test {
         address otherCreator = address(0x3);
         
         vm.startPrank(poolCreator);
-        address pool1 = factory.createPool("Pool 1", address(usdc), 1000);
-        address pool2 = factory.createPool("Pool 2", address(usdc), 2000);
+        address pool1 = factory.createPool("Pool 1", address(usdc), 8, 1000);
+        address pool2 = factory.createPool("Pool 2", address(usdc), 7, 2000);
         vm.stopPrank();
         
         vm.startPrank(otherCreator);
-        address pool3 = factory.createPool("Pool 3", address(usdc), 1500);
+        address pool3 = factory.createPool("Pool 3", address(usdc), 9, 1500);
         vm.stopPrank();
         
         address[] memory creatorPools = factory.getPoolsByOwner(poolCreator);

@@ -1,31 +1,93 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
 /**
  * @title LendingPool
  * @dev Main contract for decentralized lending pool management
- * TODO: Add reentrancy guards
- * TODO: Implement accurate interest calculation with compound
+ * Compatible with LendingFactory for multi-pool support
+ * TODO: Add accurate interest calculation with compound
  * TODO: Add event indexing for off-chain monitoring
  * TODO: Add pause/emergency functionality
+ * TODO: Add permission system for pool initialization
  */
-contract LendingPool {
+contract LendingPool is ReentrancyGuard {
     // State variables
-    string public name = "Semilla Lending Pool";
+    string public poolName;
+    address public asset; // USDC, USX, ETH, etc.
+    address public poolOwner;
+    
     uint256 public totalDeposits;
     uint256 public totalBorrowed;
-    uint256 public constant APR = 8; // 8% APR
-    uint256 public constant ADMIN_FEE_PERCENT = 10; // 10% of interest
+    uint256 public rifFundBalance;
+    
+    uint256 public apr = 8; // 8% APR (in percent)
+    uint256 public rifCoverageBp = 2000; // 20% of interest
     
     mapping(address => uint256) public deposits;
     mapping(address => uint256) public borrowed;
     mapping(address => uint256) public lastUpdateTime;
+    
+    bool private initialized;
 
     // Events
+    event PoolInitialized(string name, address asset, uint256 apr, uint256 rifCoverage);
     event Deposit(address indexed depositor, uint256 amount);
     event Withdraw(address indexed withdrawer, uint256 amount);
     event LoanCreated(address indexed borrower, uint256 amount);
     event LoanRepaid(address indexed borrower, uint256 amount);
+    event APRUpdated(uint256 newAPR);
+    event RIFUpdated(uint256 newRIFCoverageBp);
+    
+    modifier onlyPoolOwner() {
+        require(msg.sender == poolOwner, "Only pool owner");
+        _;
+    }
+    
+    modifier onlyOnce() {
+        require(!initialized, "Already initialized");
+        _;  
+    }
+    
+    /**
+     * @dev Initialize pool (called by factory)
+     */
+    function initialize(
+        string memory _name,
+        address _asset,
+        address _owner,
+        uint256 _apr,
+        uint256 _rifCoverageBp
+    ) external onlyOnce {
+        poolName = _name;
+        asset = _asset;
+        poolOwner = _owner;
+        apr = _apr;
+        rifCoverageBp = _rifCoverageBp;
+        initialized = true;
+        
+        emit PoolInitialized(_name, _asset, _apr, _rifCoverageBp);
+    }
+    
+    /**
+     * @dev Update APR (pool owner only)
+     */
+    function setAPR(uint256 newAPR) external onlyPoolOwner {
+        require(newAPR > 0 && newAPR <= 100, "Invalid APR");
+        apr = newAPR;
+        emit APRUpdated(newAPR);
+    }
+    
+    /**
+     * @dev Update RIF coverage (pool owner only)
+     */
+    function setRIFCoverage(uint256 newRIFCoverageBp) external onlyPoolOwner {
+        require(newRIFCoverageBp <= 10000, "Invalid RIF coverage");
+        rifCoverageBp = newRIFCoverageBp;
+        emit RIFUpdated(newRIFCoverageBp);
+    }
 
     /**
      * @dev Allows user to deposit funds into the pool
