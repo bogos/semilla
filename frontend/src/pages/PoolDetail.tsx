@@ -124,6 +124,12 @@ export default function PoolDetail() {
           <button onClick={() => navigate('/pools')} className="text-primary font-semibold hover:text-opacity-80">
             ← Back to Pools
           </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-6 py-2 text-primary font-semibold hover:text-opacity-80"
+          >
+            Dashboard
+          </button>
           <ConnectWallet />
         </div>
       </header>

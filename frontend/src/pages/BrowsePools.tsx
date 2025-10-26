@@ -90,6 +90,12 @@ export default function BrowsePools() {
             <button className="px-6 py-2 text-primary font-semibold hover:text-opacity-80">
               Create Pool
             </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="px-6 py-2 text-primary font-semibold hover:text-opacity-80"
+            >
+              Dashboard
+            </button>
             <ConnectWallet />
           </div>
         </div>
