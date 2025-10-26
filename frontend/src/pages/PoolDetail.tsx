@@ -224,7 +224,7 @@ export default function PoolDetail() {
 
         {/* Action Buttons */}
         <div className="mb-6">
-          <PoolActionButtons pool={pool} size="large" />
+          <PoolActionButtons pool={pool} poolAddress={pool.address as any} size="large" />
         </div>
 
         {/* Pool Info */}

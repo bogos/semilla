@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import { useAccount } from 'wagmi'
+import { Address } from 'viem'
 import Tooltip from './Tooltip'
+import { useDeposit, useLoanRequest } from '../hooks/usePoolWrite'
 
 interface Pool {
   id: string
@@ -15,15 +18,23 @@ interface Pool {
 
 interface PoolActionButtonsProps {
   pool: Pool
+  poolAddress: Address
   size?: 'small' | 'large'
 }
 
-export default function PoolActionButtons({ pool, size = 'small' }: PoolActionButtonsProps) {
+export default function PoolActionButtons({ pool, poolAddress, size = 'small' }: PoolActionButtonsProps) {
+  const { isConnected } = useAccount()
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [showBorrowModal, setShowBorrowModal] = useState(false)
   const [depositAmount, setDepositAmount] = useState('')
   const [borrowAmount, setBorrowAmount] = useState('')
   const [estimatedDays, setEstimatedDays] = useState(365)
+  
+  // Deposit hook
+  const { deposit, isPending: isDepositPending, isSuccess: isDepositSuccess } = useDeposit(poolAddress)
+  
+  // Loan request hook
+  const { requestLoan, isPending: isLoanPending, isSuccess: isLoanSuccess } = useLoanRequest(poolAddress)
 
   const calculateEarnings = (amount: number, days: number, apr: number) => {
     if (!amount || amount <= 0) return 0
@@ -121,14 +132,26 @@ export default function PoolActionButtons({ pool, size = 'small' }: PoolActionBu
               Cancelar
             </button>
             <button
-              onClick={() => {
-                setShowDepositModal(false)
-                setDepositAmount('')
-                setEstimatedDays(365)
+              onClick={async () => {
+                if (!isConnected) {
+                  alert('Por favor conecta tu wallet')
+                  return
+                }
+                if (!depositAmount) {
+                  alert('Por favor ingresa un monto')
+                  return
+                }
+                await deposit(depositAmount)
+                if (isDepositSuccess) {
+                  setShowDepositModal(false)
+                  setDepositAmount('')
+                  setEstimatedDays(365)
+                }
               }}
-              className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition"
+              disabled={isDepositPending}
+              className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition disabled:opacity-50"
             >
-              Depositar
+              {isDepositPending ? 'Depositando...' : 'Depositar'}
             </button>
           </div>
         </div>
@@ -169,13 +192,25 @@ export default function PoolActionButtons({ pool, size = 'small' }: PoolActionBu
               Cancelar
             </button>
             <button
-              onClick={() => {
-                setShowBorrowModal(false)
-                setBorrowAmount('')
+              onClick={async () => {
+                if (!isConnected) {
+                  alert('Por favor conecta tu wallet')
+                  return
+                }
+                if (!borrowAmount) {
+                  alert('Por favor ingresa un monto')
+                  return
+                }
+                await requestLoan(borrowAmount)
+                if (isLoanSuccess) {
+                  setShowBorrowModal(false)
+                  setBorrowAmount('')
+                }
               }}
-              className="flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition"
+              disabled={isLoanPending}
+              className="flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition disabled:opacity-50"
             >
-              Solicitar
+              {isLoanPending ? 'Solicitando...' : 'Solicitar'}
             </button>
           </div>
         </div>
