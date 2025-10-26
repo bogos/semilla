@@ -17,6 +17,7 @@ export default function CreatePool() {
     description: '',
     imageUrl: '',
   })
+  const [copied, setCopied] = useState(false)
   const { createPool, isPending: isCreating, isSuccess, hash } = useCreatePool()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +77,9 @@ export default function CreatePool() {
       </div>
     )
   }
+
+  // Este 'i' que creaste (según instrucción) lo agregamos debajo de "¿Qué es un pool?"
+  // Voy a agregar un mensaje informativo simple, por ejemplo una frase con estilo, debajo del h3 correspondiente.
 
   return (
     <div className="min-h-screen" style={{background: 'linear-gradient(to bottom right, #A8D5BA, #E8F0D9)'}}>
@@ -258,7 +262,28 @@ export default function CreatePool() {
                 </div>
               </div>
             </div>
-
+            {hash && (
+            <div className="rounded-lg bg-blue-100 border border-blue-300 px-4 py-3 flex flex-col gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-700 truncate flex-1">
+                      <b>Transacción enviada:</b> {hash}
+                    </span>
+                    <button
+                      type="button"
+                      className="p-1 bg-blue-200 hover:bg-blue-300 rounded transition text-blue-700 text-xs font-semibold"
+                      onClick={() => {
+                        navigator.clipboard.writeText(hash || '')
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                      }}
+                      title="Copiar hash de transacción"
+                      disabled={copied}
+                    >
+                      📋 {copied ? 'Copiado!' : 'Copiar'}
+                    </button>
+                  </div>
+                </div>
+                )}
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-6 border-t border-gray-200">
                   <button
@@ -275,9 +300,6 @@ export default function CreatePool() {
                   >
                     {isCreating ? 'Creando Pool...' : 'Crear Pool'}
                   </button>
-                  {hash && (
-                    <p className="text-xs text-gray-600 mt-2">Transacción: {hash}</p>
-                  )}
                 </div>
               </form>
             </div>
@@ -287,9 +309,10 @@ export default function CreatePool() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
               <h3 className="font-bold text-primary mb-4 text-lg">ℹ️ ¿Qué es un Pool?</h3>
+              {/* Mensaje "i" agregado abajo según instrucción */}
               <p className="text-gray-600 mb-4 text-sm">
-                Un pool es una comunidad financiera descentralizada donde los prestamistas depositan fondos para ganar intereses, 
-                y los prestatarios solicitan créditos verificados con Zero-Knowledge Proofs.
+                Un pool es el núcleo de tu comunidad financiera descentralizada donde los prestamistas depositan fondos para ganar intereses, 
+                y los prestatarios solicitan créditos verificados.
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li>✓ Tú eres el gestor del pool</li>
@@ -298,6 +321,15 @@ export default function CreatePool() {
                 <li>✓ Tu reputación crece con el tiempo</li>
               </ul>
             </div>
+
+            {/* Transaction Info */}
+            {hash && (
+              <div className="bg-white rounded-lg shadow-md p-6 mt-4 sticky top-24">
+                <h3 className="font-bold text-primary mb-4 text-lg">ℹ️ ¿Dónde está el address del nuevo pool?</h3>
+                <p className="text-gray-600 text-sm">Una vez confirmada la transacción, el contrato emite un evento con el address del nuevo pool creado.</p>
+                <p className="text-gray-600 text-sm mt-2">(Para ver el address del pool, consulta el receipt del evento en block explorer)</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

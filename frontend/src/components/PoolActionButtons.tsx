@@ -20,9 +20,10 @@ interface PoolActionButtonsProps {
   pool: Pool
   poolAddress: Address
   size?: 'small' | 'large'
+  compact?: boolean
 }
 
-export default function PoolActionButtons({ pool, poolAddress, size = 'small' }: PoolActionButtonsProps) {
+export default function PoolActionButtons({ pool, poolAddress, size = 'small', compact = false }: PoolActionButtonsProps) {
   const { isConnected } = useAccount()
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [showBorrowModal, setShowBorrowModal] = useState(false)
@@ -46,22 +47,26 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small' }:
 
   return (
     <>
-      <div className={`flex ${size === 'large' ? 'gap-6' : 'gap-3'}`}>
+      <div className={`flex ${size === 'large' ? 'gap-6' : 'gap-2'}`}>
         <button
           onClick={() => setShowDepositModal(true)}
           className={size === 'large' 
             ? 'flex-1 px-4 py-4 bg-primary text-white rounded-lg font-semibold text-lg hover:bg-opacity-90 transition'
-            : 'flex-1 px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition'}
+            : compact
+              ? 'px-3 py-2 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-opacity-90 transition whitespace-nowrap'
+              : 'flex-1 px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition'}
         >
-          💰 Depositar
+          {compact ? 'Depositar' : '💰 Depositar'}
         </button>
         <button
           onClick={() => setShowBorrowModal(true)}
           className={size === 'large'
             ? 'flex-1 px-4 py-4 bg-accent text-dark rounded-lg font-semibold text-lg hover:bg-opacity-90 transition'
-            : 'flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition'}
+            : compact
+              ? 'px-3 py-2 bg-accent text-dark rounded-lg font-semibold text-sm hover:bg-opacity-90 transition whitespace-nowrap'
+              : 'flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition'}
         >
-          📋 Solicitar Préstamo
+          {compact ? 'Préstamo' : '📋 Solicitar Préstamo'}
         </button>
       </div>
 

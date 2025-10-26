@@ -2,9 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import ConnectWallet from '../components/ConnectWallet'
 import Tooltip from '../components/Tooltip'
-import LoanRepayment from '../components/LoanRepayment'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
-import { CONTRACTS } from '../config/contracts'
 
 interface UserDeposit {
   poolName: string
@@ -111,15 +109,15 @@ export default function Dashboard() {
       {/* Dashboard Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Welcome Section */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+        <div className="bg-white rounded-lg shadow-md p-8 mb-6">
           <h2 className="text-3xl font-bold text-primary mb-2">
-            Bienvenido, {address?.slice(0, 6)}...{address?.slice(-4)}
+            Bienvenido, <span className="font-mono">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
           </h2>
           <p className="text-gray-600">Aquí está un resumen de tu actividad en Semilla</p>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <p className="text-sm text-gray-600 mb-2">Balance Neto</p>
             <p className="text-3xl font-bold text-primary">${netBalance.toLocaleString()}</p>
@@ -139,7 +137,7 @@ export default function Dashboard() {
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Portfolio Breakdown */}
           {mockDeposits.length > 0 && (
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -208,7 +206,7 @@ export default function Dashboard() {
             {mockDeposits.length === 0 ? (
               <p className="text-gray-600 text-center py-8">No tienes depósitos yet</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-5">
                 {mockDeposits.map((deposit, idx) => (
                   <div key={idx} className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
                     <div className="flex justify-between items-center mb-3">

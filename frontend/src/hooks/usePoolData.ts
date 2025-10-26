@@ -19,6 +19,12 @@ export function useActivePools() {
     address: CONTRACTS.POOL_REGISTRY,
     abi: POOL_REGISTRY_ABI,
     functionName: 'getActivePools',
+    query: {
+      staleTime: 1000 * 60 * 5, // 5 minutos
+      gcTime: 1000 * 60 * 10, // 10 minutos (antes cacheTime)
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
   })
 }
 
@@ -45,6 +51,12 @@ export function usePoolCount() {
     address: CONTRACTS.POOL_REGISTRY,
     abi: POOL_REGISTRY_ABI,
     functionName: 'getPoolCount',
+    query: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 10,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
   })
 }
 
@@ -53,6 +65,12 @@ export function usePoolStats(poolAddress: Address) {
     address: poolAddress,
     abi: LENDING_POOL_ABI,
     functionName: 'getPoolStats',
+    query: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 10,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
   } as any)
 
   const result = stats as [bigint, bigint, bigint, bigint] | undefined

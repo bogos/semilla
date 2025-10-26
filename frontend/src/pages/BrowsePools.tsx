@@ -6,6 +6,12 @@ import ConnectWallet from '../components/ConnectWallet'
 import { useActivePools } from '../hooks/usePoolData'
 import { Address } from 'viem'
 
+const tokenIcons: { [key: string]: string } = {
+  USDC: '/assets/usdc_icon.svg',
+  USX: '/assets/usx_icon.jpg',
+  ETH: '/assets/eth_icon.svg',
+}
+
 interface Pool {
   id: string
   address: Address
@@ -50,10 +56,9 @@ const mockPools: Pool[] = [
 export default function BrowsePools() {
   const navigate = useNavigate()
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
-  const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({
     asset: 'all',
-    minAPR: 0,
+    minAPR: 2,
     maxAPR: 20,
   })
   
@@ -88,12 +93,6 @@ export default function BrowsePools() {
           </button>
           <div className="flex gap-4">
             <button
-              onClick={() => navigate('/create-pool')}
-              className="px-6 py-2 text-primary font-semibold hover:text-opacity-80"
-            >
-              Create Pool
-            </button>
-            <button
               onClick={() => navigate('/dashboard')}
               className="px-6 py-2 text-primary font-semibold hover:text-opacity-80"
             >
@@ -106,89 +105,81 @@ export default function BrowsePools() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters Expandible */}
-        <div className="mb-6">
+        {/* Pools Header */}
+        <div className="mb-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-primary">Pools Disponibles ({filteredPools.length})</h2>
           <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="px-4 py-2 bg-gray-200 text-dark rounded-lg font-semibold hover:bg-gray-300 transition"
+            onClick={() => navigate('/create-pool')}
+            className="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition shadow-md"
           >
-            🔍 {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
+            ➕ Crear Tu Pool
           </button>
-          
-          {showFilters && (
-            <div className="bg-white rounded-lg shadow-md p-6 mt-4 grid grid-cols-3 gap-6">
-              {/* Asset Filter */}
-              <div>
-                <label className="block text-sm font-semibold text-dark mb-3">Activo</label>
-                <div className="space-y-2">
-                  {['all', 'USDC', 'USX', 'ETH'].map(asset => (
-                    <label key={asset} className="flex items-center">
-                      <input
-                        type="radio"
-                        name="asset"
-                        value={asset}
-                        checked={filters.asset === asset}
-                        onChange={e => setFilters({ ...filters, asset: e.target.value })}
-                        className="mr-2"
-                      />
-                      <span className="text-gray-600">{asset === 'all' ? 'Todos' : asset}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+        </div>
 
-              {/* APR Range Filter */}
-              <div>
-                <label className="block text-sm font-semibold text-dark mb-3">APR: {filters.minAPR}-{filters.maxAPR}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="20"
-                  value={filters.maxAPR}
-                  onChange={e => setFilters({ ...filters, maxAPR: parseInt(e.target.value) })}
-                  className="w-full"
-                />
-              </div>
-              
-              <div className="flex items-end">
-                <button
-                  onClick={() => setFilters({ asset: 'all', minAPR: 0, maxAPR: 20 })}
-                  className="w-full px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition"
-                >
-                  Limpiar filtros
-                </button>
-              </div>
-            </div>
-          )}
+        {/* Filters and View Mode */}
+        <div className="mb-6 bg-white rounded-lg shadow-sm p-4 flex items-center gap-4 flex-wrap">
+          {/* Asset Filter */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-semibold text-dark">Activo:</label>
+            <select
+              value={filters.asset}
+              onChange={e => setFilters({ ...filters, asset: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 text-sm font-semibold focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            >
+              <option value="all">Todos</option>
+              <option value="USDC">USDC</option>
+              <option value="USX">USX</option>
+              <option value="ETH">ETH</option>
+            </select>
+          </div>
+
+          {/* APR Range Filter */}
+          <div className="flex items-center gap-1.5">
+            <label className="text-sm font-semibold text-dark whitespace-nowrap ml-2 w-24">APR: {filters.minAPR}-{filters.maxAPR}%</label>
+            <input
+              type="range"
+              min="2"
+              max="20"
+              value={filters.maxAPR}
+              onChange={e => setFilters({ ...filters, maxAPR: parseInt(e.target.value) })}
+              className="w-32 accent-primary"
+            />
+          </div>
+
+          <div className="flex gap-2 ml-auto items-center">
+            {!(filters.asset === 'all' && filters.maxAPR === 20) && (
+              <button
+                onClick={() => setFilters({ asset: 'all', minAPR: 2, maxAPR: 20 })}
+                className="h-10 w-24 bg-accent text-dark rounded-lg font-semibold text-sm hover:bg-opacity-90 transition flex items-center justify-center"
+              >
+                Limpiar
+              </button>
+            )}
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`h-10 w-24 rounded-lg font-semibold transition flex items-center justify-center ${
+                viewMode === 'grid'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-200 text-dark hover:bg-gray-300'
+              }`}
+            >
+              📊 Grid
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`h-10 w-24 rounded-lg font-semibold transition flex items-center justify-center ${
+                viewMode === 'table'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-200 text-dark hover:bg-gray-300'
+              }`}
+            >
+              📋 Tabla
+            </button>
+          </div>
         </div>
 
         {/* Pools Grid/Table */}
         <div>
-            <div className="mb-6 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-primary">Pools Disponibles ({filteredPools.length})</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
-                    viewMode === 'grid'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-200 text-dark hover:bg-gray-300'
-                  }`}
-                >
-                  📊 Grid
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
-                    viewMode === 'table'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-200 text-dark hover:bg-gray-300'
-                  }`}
-                >
-                  📋 Tabla
-                </button>
-              </div>
-            </div>
 
             {isLoading ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
