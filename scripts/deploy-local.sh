@@ -145,6 +145,8 @@ ${BLUE}Contract Addresses:${NC}
   PoolRegistry: $POOL_REGISTRY
   LendingFactory: $LENDING_FACTORY
   IdentityVerifier: $IDENTITY_VERIFIER
+  MockUSDC: $MOCK_USDC
+  MockUSX: $MOCK_USX
 
 ${BLUE}Network Info:${NC}
   RPC URL: $RPC_URL

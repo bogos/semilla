@@ -5,6 +5,8 @@ import "forge-std/Script.sol";
 import "../src/factory/LendingFactory.sol";
 import "../src/factory/PoolRegistry.sol";
 import "../src/IdentityVerifier.sol";
+import "../src/tokens/MockUSDC.sol";
+import "../src/tokens/MockUSX.sol";
 
 contract Deploy is Script {
     function run() external {
@@ -35,6 +37,11 @@ contract Deploy is Script {
         console.log("- PoolRegistry:", address(poolRegistry));
         console.log("- LendingFactory:", address(lendingFactory));
         console.log("- IdentityVerifier:", address(identityVerifier));
+        console.log("- MockUSDC:", address(mockUSDC));
+        console.log("- MockUSX:", address(mockUSX));
+        console.log("\nToken Info:");
+        console.log("- MockUSDC Balance (deployer):", mockUSDC.balanceOf(msg.sender), "(6 decimals)");
+        console.log("- MockUSX Balance (deployer):", mockUSX.balanceOf(msg.sender), "(6 decimals)");
         
         console.log("\nNext Steps:");
         console.log("1. Set VITE_POOL_REGISTRY_ADDRESS and VITE_LENDING_FACTORY_ADDRESS in .env.local");
