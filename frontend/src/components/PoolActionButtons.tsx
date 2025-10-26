@@ -33,8 +33,28 @@ export default function PoolActionButtons({ pool, size = 'small' }: PoolActionBu
 
   const estimatedEarnings = calculateEarnings(parseFloat(depositAmount) || 0, estimatedDays, pool.apr)
 
-  const DepositModal = () => (
-    showDepositModal && (
+  return (
+    <>
+      <div className={`flex ${size === 'large' ? 'gap-6' : 'gap-3'}`}>
+        <button
+          onClick={() => setShowDepositModal(true)}
+          className={size === 'large' 
+            ? 'flex-1 px-4 py-4 bg-primary text-white rounded-lg font-semibold text-lg hover:bg-opacity-90 transition'
+            : 'flex-1 px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition'}
+        >
+          💰 Depositar
+        </button>
+        <button
+          onClick={() => setShowBorrowModal(true)}
+          className={size === 'large'
+            ? 'flex-1 px-4 py-4 bg-accent text-dark rounded-lg font-semibold text-lg hover:bg-opacity-90 transition'
+            : 'flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition'}
+        >
+          📋 Solicitar Préstamo
+        </button>
+      </div>
+
+      {showDepositModal && (
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
         onClick={() => setShowDepositModal(false)}
@@ -91,7 +111,11 @@ export default function PoolActionButtons({ pool, size = 'small' }: PoolActionBu
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => setShowDepositModal(false)}
+              onClick={() => {
+                setShowDepositModal(false)
+                setDepositAmount('')
+                setEstimatedDays(365)
+              }}
               className="flex-1 px-4 py-2 bg-gray-200 text-dark rounded-lg font-semibold hover:bg-gray-300 transition"
             >
               Cancelar
@@ -100,6 +124,7 @@ export default function PoolActionButtons({ pool, size = 'small' }: PoolActionBu
               onClick={() => {
                 setShowDepositModal(false)
                 setDepositAmount('')
+                setEstimatedDays(365)
               }}
               className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition"
             >
@@ -108,11 +133,9 @@ export default function PoolActionButtons({ pool, size = 'small' }: PoolActionBu
           </div>
         </div>
       </div>
-    )
-  )
+      )}
 
-  const BorrowModal = () => (
-    showBorrowModal && (
+      {showBorrowModal && (
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
         onClick={() => setShowBorrowModal(false)}
@@ -137,7 +160,10 @@ export default function PoolActionButtons({ pool, size = 'small' }: PoolActionBu
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => setShowBorrowModal(false)}
+              onClick={() => {
+                setShowBorrowModal(false)
+                setBorrowAmount('')
+              }}
               className="flex-1 px-4 py-2 bg-gray-200 text-dark rounded-lg font-semibold hover:bg-gray-300 transition"
             >
               Cancelar
@@ -154,37 +180,7 @@ export default function PoolActionButtons({ pool, size = 'small' }: PoolActionBu
           </div>
         </div>
       </div>
-    )
-  )
-
-  const buttonClass = size === 'large' 
-    ? 'flex-1 px-4 py-4 bg-primary text-white rounded-lg font-semibold text-lg hover:bg-opacity-90 transition'
-    : 'flex-1 px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition'
-  
-  const borrowButtonClass = size === 'large'
-    ? 'flex-1 px-4 py-4 bg-accent text-dark rounded-lg font-semibold text-lg hover:bg-opacity-90 transition'
-    : 'flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition'
-
-  const containerGap = size === 'large' ? 'gap-6' : 'gap-3'
-
-  return (
-    <>
-      <div className={`flex ${containerGap}`}>
-        <button
-          onClick={() => setShowDepositModal(true)}
-          className={buttonClass}
-        >
-          💰 Depositar
-        </button>
-        <button
-          onClick={() => setShowBorrowModal(true)}
-          className={borrowButtonClass}
-        >
-          📋 Solicitar Préstamo
-        </button>
-      </div>
-      <DepositModal />
-      <BorrowModal />
+      )}
     </>
   )
 }
