@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PoolCard from '../components/PoolCard'
+import PoolSkeleton from '../components/PoolSkeleton'
 import ConnectWallet from '../components/ConnectWallet'
+import { useActivePools } from '../hooks/usePoolData'
+import { Address } from 'viem'
 
 interface Pool {
   id: string
+  address: Address
   name: string
   asset: string
   apr: number
@@ -15,10 +19,11 @@ interface Pool {
   active: boolean
 }
 
-// Mock data - TODO: Replace with smart contract calls
+// Fallback mock data for when contracts are not available
 const mockPools: Pool[] = [
   {
     id: '1',
+    address: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
     name: 'Microcrédito Lima',
     asset: 'USDC',
     apr: 8,
@@ -30,6 +35,7 @@ const mockPools: Pool[] = [
   },
   {
     id: '2',
+    address: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512' as Address,
     name: 'Crédito Cusco',
     asset: 'USX',
     apr: 7,
@@ -37,28 +43,6 @@ const mockPools: Pool[] = [
     liquidity: 25000,
     lenders: 5,
     borrowers: 3,
-    active: true,
-  },
-  {
-    id: '3',
-    name: 'Fondo Ayacucho',
-    asset: 'ETH',
-    apr: 10,
-    rifCoverage: 25,
-    liquidity: 75000,
-    lenders: 20,
-    borrowers: 15,
-    active: true,
-  },
-  {
-    id: '4',
-    name: 'Arequipa Community',
-    asset: 'USDC',
-    apr: 6,
-    rifCoverage: 18,
-    liquidity: 15000,
-    lenders: 3,
-    borrowers: 2,
     active: true,
   },
 ]
@@ -72,8 +56,22 @@ export default function BrowsePools() {
     minAPR: 0,
     maxAPR: 20,
   })
+  
+  // Fetch real pools from contract
+  const { data: activePoolAddresses, isLoading } = useActivePools()
+  
+  // Use contract data if available, fallback to mock
+  const pools = useMemo<Pool[]>(() => {
+    const poolAddresses = activePoolAddresses as Address[] | undefined
+    if (!poolAddresses || poolAddresses.length === 0) {
+      return mockPools
+    }
+    // TODO: Map contract data to Pool interface
+    // For now, use mock data
+    return mockPools
+  }, [activePoolAddresses])
 
-  const filteredPools = mockPools.filter(pool => {
+  const filteredPools = pools.filter(pool => {
     if (filters.asset !== 'all' && pool.asset !== filters.asset) return false
     if (pool.apr < filters.minAPR || pool.apr > filters.maxAPR) return false
     return true
@@ -183,7 +181,13 @@ export default function BrowsePools() {
               </div>
             </div>
 
-            {filteredPools.length === 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <PoolSkeleton key={i} />
+                ))}
+              </div>
+            ) : filteredPools.length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm p-12 text-center">
                 <p className="text-gray-600 text-lg">No pools match your filters</p>
               </div>
