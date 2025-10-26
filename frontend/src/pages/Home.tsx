@@ -4,7 +4,7 @@ export default function Home() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen" style={{background: 'linear-gradient(to bottom right, #A8D5BA, #E8F0D9)'}}>
+    <div className="flex flex-col min-h-screen" style={{background: 'linear-gradient(to bottom right, #A8D5BA, #E8F0D9)'}}>
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -88,7 +88,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-primary text-white mt-32">
+      <footer className="bg-primary text-white mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-3 gap-8 mb-8">
             <a href="#" className="hover:text-accent transition font-semibold">

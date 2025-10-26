@@ -37,6 +37,6 @@ export const queryClient = new QueryClient({
 export const config = getDefaultConfig({
   appName: 'Semilla',
   projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'test-project-id',
-  chains: [anvil, scrollSepolia],
+  chains: [scrollSepolia, anvil],
   ssr: false,
 })
