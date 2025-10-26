@@ -229,6 +229,7 @@ export default function BrowsePools() {
                       <th className="px-6 py-3 text-right text-sm font-semibold">Liquidez</th>
                       <th className="px-6 py-3 text-center text-sm font-semibold">RIF</th>
                       <th className="px-6 py-3 text-center text-sm font-semibold">Participantes</th>
+                      <th className="px-6 py-3 text-right text-sm font-semibold">Balance</th>
                       <th className="px-6 py-3 text-center text-sm font-semibold">Acciones</th>
                     </tr>
                   </thead>

@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
-import { Address } from 'viem'
+import { Address, parseEther } from 'viem'
 import Tooltip from './Tooltip'
 import { useDeposit, useLoanRequest, useRepayLoan } from '../hooks/usePoolWrite'
+import { useApproveToken } from '../hooks/useApproveToken'
+import { TOKENS } from '../config/contracts'
 import { useUserLoanInfo } from '../hooks/useUserData'
 import { Toast, ToastType } from './Toast'
 
@@ -35,6 +37,16 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
   const [repayAmount, setRepayAmount] = useState('')
   const [estimatedDays, setEstimatedDays] = useState(30)
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
+  const [isApprovePending, setIsApprovePending] = useState(false)
+  
+  // Determine token address based on pool asset
+  const tokenAddress = pool.asset === 'USDC' ? TOKENS.USDC : pool.asset === 'USX' ? TOKENS.USX : undefined
+  
+  // Approve hook
+  const { approve: approveToken, isPending: isApprovingToken, isSuccess: isApproveSuccess } = useApproveToken(
+    tokenAddress as Address | undefined,
+    poolAddress
+  )
   
   // Deposit hook
   const { deposit, isPending: isDepositPending, isSuccess: isDepositSuccess } = useDeposit(poolAddress)
@@ -48,7 +60,7 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
   // Check for active loan
   const { data: loanData } = useUserLoanInfo(poolAddress)
   const hasActiveLoan = loanData && loanData.principal > 0n && loanData.status === 'active'
-
+  
   const calculateEarnings = (amount: number, days: number, apr: number) => {
     if (!amount || amount <= 0) return 0
     const totalInterest = (amount * apr / 365 / 100) * days
@@ -56,6 +68,46 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
   }
 
   const estimatedEarnings = calculateEarnings(parseFloat(depositAmount) || 0, estimatedDays, pool.apr)
+  
+  // After approval is confirmed, deposit automatically
+  useEffect(() => {
+    if (isApproveSuccess && isApprovePending && depositAmount && showDepositModal && !isApprovingToken) {
+      console.log('✅ Approval confirmed! Now depositing...')
+      setTimeout(() => {
+        setIsApprovePending(false)
+        // Pass pool asset so deposit can use correct decimals
+        console.log('Depositing with asset:', pool.asset, 'amount:', depositAmount)
+        deposit(depositAmount)
+      }, 1000) // Wait 1 second to ensure approval is finalized
+    }
+  }, [isApproveSuccess, isApprovePending, isApprovingToken, depositAmount, showDepositModal, deposit])
+  
+  // Track if we just sent a deposit
+  const [justDepositedRef] = useState({ current: false })
+  
+  // Close modal and show toast after deposit hash is received
+  useEffect(() => {
+    // Only close if: approve is done, deposit was sent (isPending was true), and now it's false
+    // This means the transaction was successfully broadcast
+    if (!isApprovePending && !isDepositPending && depositAmount && showDepositModal && justDepositedRef.current) {
+      console.log('✅ Deposit sent! Closing modal...')
+      setShowDepositModal(false)
+      setDepositAmount('')
+      setEstimatedDays(30)
+      setToast({
+        message: `💰 Depósito enviado exitosamente`,
+        type: 'success',
+      })
+      justDepositedRef.current = false
+    }
+  }, [isApprovePending, isDepositPending, depositAmount, showDepositModal, justDepositedRef])
+  
+  // Track when deposit is initiated
+  useEffect(() => {
+    if (isDepositPending) {
+      justDepositedRef.current = true
+    }
+  }, [isDepositPending, justDepositedRef])
 
   return (
     <>
@@ -159,7 +211,8 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
               Cancelar
             </button>
             <button
-              onClick={async () => {
+              onClick={() => {
+                console.log('💰 Deposit button clicked:', { poolAddress, depositAmount, isConnected })
                 if (!isConnected) {
                   alert('Por favor conecta tu wallet')
                   return
@@ -168,21 +221,21 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
                   alert('Por favor ingresa un monto')
                   return
                 }
-                await deposit(depositAmount)
-                if (isDepositSuccess) {
-                  setShowDepositModal(false)
-                  setDepositAmount('')
-                  setEstimatedDays(30)
-                  setToast({
-                    message: ` Depósito de ${depositAmount} ${pool.asset} realizado exitosamente`,
-                    type: 'success',
-                  })
+                if (!tokenAddress) {
+                  alert('Token no soportado')
+                  return
                 }
+                
+                // First approve with unlimited amount (max uint256)
+                console.log('🔓 Requesting approval for unlimited amount...')
+                console.log('Pool asset:', pool.asset)
+                approveToken(BigInt(2)**BigInt(256) - BigInt(1))
+                setIsApprovePending(true)
               }}
-              disabled={isDepositPending}
+              disabled={isDepositPending || isApprovingToken || isApprovePending}
               className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-opacity-90 transition disabled:opacity-50"
             >
-              {isDepositPending ? 'Depositando...' : 'Depositar'}
+              {isApprovingToken || isApprovePending ? '🔓 Aprobando...' : isDepositPending ? 'Depositando...' : 'Depositar'}
             </button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { LENDING_POOL_ABI, LENDING_FACTORY_ABI, CONTRACTS } from '../config/contracts'
-import { Address, parseEther } from 'viem'
+import { Address, parseEther, parseUnits } from 'viem'
 
 /**
  * Hook para depositar ETH en un pool de préstamos
@@ -14,17 +14,33 @@ export function useDeposit(poolAddress: Address) {
 
   const deposit = (amountInEth: string) => {
     try {
-      const valueInWei = parseEther(amountInEth)
+      // Parse amount using 6 decimals (USDC/USX standard)
+      // TODO: Get actual decimals from the pool's token contract
+      const parsedAmount = parseUnits(amountInEth, 6)
+      console.log('🔗 useDeposit - Calling writeContract:', {
+        address: poolAddress,
+        functionName: 'deposit',
+        amount: amountInEth,
+        parsedAmount: parsedAmount.toString(),
+        args: [parsedAmount],
+      })
       writeContract({
         address: poolAddress,
         abi: LENDING_POOL_ABI,
         functionName: 'deposit',
-        value: valueInWei,
+        args: [parsedAmount],
       })
     } catch (err) {
-      console.error('Error en depósito:', err)
+      console.error('❌ Error en depósito:', err)
     }
   }
+  
+  // Log errors
+  React.useEffect(() => {
+    if (error) {
+      console.error('🚨 useDeposit error:', error)
+    }
+  }, [error])
 
   return {
     deposit,

@@ -1,6 +1,10 @@
 import { useNavigate } from 'react-router-dom'
+import { useAccount } from 'wagmi'
+import { useState, useEffect } from 'react'
+import { formatUnits } from 'viem'
 import PoolActionButtons from './PoolActionButtons'
 import Tooltip from './Tooltip'
+import { useUserBalance } from '../hooks/usePoolData'
 import { Address } from 'viem'
 
 const tokenIcons: { [key: string]: string } = {
@@ -29,9 +33,25 @@ interface PoolCardProps {
 
 export default function PoolCard({ pool, variant = 'grid' }: PoolCardProps) {
   const navigate = useNavigate()
+  const { address: userAddress } = useAccount()
   
-  // Use mock address for now - TODO: get real pool address from contract
+  // Use pool address from props, or default to zero address
   const poolAddress = (pool.address || `0x${'0'.repeat(40)}`) as Address
+  
+  // Debug: log pool address
+  useEffect(() => {
+    console.log(`📊 Pool Card - ID: ${pool.id}, Name: ${pool.name}, Address: ${poolAddress}`)
+  }, [pool.id, pool.name, poolAddress])
+  
+  // Only fetch balance for real pools (IDs >= 3 are from getActivePools, IDs 1-2 are mocks)
+  const isRealPool = parseInt(pool.id) >= 3
+  
+  const { data: userBalanceWei } = useUserBalance(
+    isRealPool ? poolAddress : undefined,
+    userAddress
+  )
+  const decimals = pool.asset === 'ETH' ? 18 : 6
+  const userBalance = userBalanceWei ? parseFloat(formatUnits(userBalanceWei as bigint, decimals)) : null
 
   if (variant === 'table') {
     return (
@@ -70,6 +90,12 @@ export default function PoolCard({ pool, variant = 'grid' }: PoolCardProps) {
         <td className="px-6 py-4 text-center">
           <p className="text-sm"><span className="font-bold">{pool.lenders}</span> / {pool.borrowers}</p>
           <p className="text-xs text-gray-600">Prestamistas / Prestatarios</p>
+        </td>
+        <td className="px-6 py-4 text-right">
+          <p className="font-semibold text-green-600">
+            {userBalance !== null ? userBalance.toFixed(4) : 'Cargando...'}
+          </p>
+          <p className="text-xs text-gray-600 mt-1">{pool.asset}</p>
         </td>
         <td className="px-6 py-4 text-center" onClick={e => e.stopPropagation()}>
           <PoolActionButtons pool={pool} poolAddress={poolAddress} size="small" compact={true} />
@@ -121,6 +147,12 @@ export default function PoolCard({ pool, variant = 'grid' }: PoolCardProps) {
         <div>
           <p className="text-sm text-gray-600">RIF Coverage</p>
           <p className="text-lg font-bold text-primary">{pool.rifCoverage}%</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-600">Mi Depósito</p>
+          <p className="text-lg font-bold text-green-600">
+            {userBalance !== null ? `${userBalance.toFixed(4)} ${pool.asset}` : 'Cargando...'}
+          </p>
         </div>
         <div>
           <p className="text-sm text-gray-600">Prestamistas</p>

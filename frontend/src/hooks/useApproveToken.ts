@@ -1,5 +1,5 @@
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { Address } from 'viem'
+import { Address, parseEther } from 'viem'
 
 const ERC20_ABI = [
   {
@@ -34,13 +34,20 @@ export function useApproveToken(tokenAddress: Address, spenderAddress: Address) 
     hash,
   })
 
-  const approve = (amount: bigint) => {
-    writeContract({
-      address: tokenAddress,
-      abi: ERC20_ABI,
-      functionName: 'approve',
-      args: [spenderAddress, amount],
-    })
+  const approve = (amount: bigint | string) => {
+    try {
+      // If amount is string, parse it; if bigint, use directly
+      const parsedAmount = typeof amount === 'string' ? parseEther(amount) : amount
+      console.log('🔓 Approving amount:', parsedAmount.toString())
+      writeContract({
+        address: tokenAddress,
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [spenderAddress, parsedAmount],
+      })
+    } catch (err) {
+      console.error('❌ Error in approve:', err)
+    }
   }
 
   return {

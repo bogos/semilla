@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useAccount } from 'wagmi'
+import { formatUnits } from 'viem'
 import Tooltip from '../components/Tooltip'
 import PoolActionButtons from '../components/PoolActionButtons'
 import LoanRepayment from '../components/LoanRepayment'
 import ConnectWallet from '../components/ConnectWallet'
+import { useUserBalance } from '../hooks/usePoolData'
 
 // Token icons mapping
 const tokenIcons: { [key: string]: string } = {
@@ -90,6 +93,7 @@ const mockPoolsDetail: { [key: string]: Pool } = {
 export default function PoolDetail() {
   const navigate = useNavigate()
   const { poolId } = useParams()
+  const { address: userAddress } = useAccount()
   const [copiedAddress, setCopiedAddress] = useState(false)
 
   // Try to get pool from mock data first, then create a minimal pool object from address
@@ -113,6 +117,15 @@ export default function PoolDetail() {
       address: poolId,
     }
   }
+  
+  // Get user's balance in this pool
+  const { data: userBalanceWei, isLoading: isBalanceLoading } = useUserBalance(
+    pool?.address as `0x${string}` | undefined,
+    userAddress
+  )
+  // USDC/USX have 6 decimals, ETH has 18
+  const decimals = pool?.asset === 'ETH' ? 18 : 6
+  const userBalance = userBalanceWei ? parseFloat(formatUnits(userBalanceWei as bigint, decimals)) : 0
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(pool?.address || '')
@@ -206,6 +219,12 @@ export default function PoolDetail() {
             <div>
               <p className="text-sm text-gray-600 mb-2">Liquidez Total</p>
               <p className="text-2xl font-bold text-primary">${pool.liquidity.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Mi Depósito</p>
+              <p className="text-2xl font-bold text-green-600">
+                {isBalanceLoading ? 'Cargando...' : `${userBalance.toFixed(4)} ${pool.asset}`}
+              </p>
             </div>
             <div>
               <div className="flex items-center gap-1 mb-2">

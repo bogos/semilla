@@ -57,6 +57,42 @@ export function usePoolMetadata(poolAddress: Address | undefined) {
 }
 
 /**
+ * Fetch user's deposit balance in a specific pool
+ */
+export function useUserBalance(poolAddress: Address | undefined, userAddress: Address | undefined) {
+  const result = useReadContract({
+    address: poolAddress,
+    abi: LENDING_POOL_ABI,
+    functionName: 'getBalance',
+    args: userAddress ? [userAddress] : undefined,
+    query: {
+      enabled: !!poolAddress && !!userAddress,
+      staleTime: 1000 * 60, // 1 minuto
+    },
+  })
+  
+  React.useEffect(() => {
+    console.log('🔍 useUserBalance state:', {
+      poolAddress,
+      userAddress,
+      isLoading: result.isLoading,
+      isSuccess: result.isSuccess,
+      isError: result.isError,
+      data: result.data,
+      error: result.error,
+    })
+    if (result.isSuccess && result.data) {
+      console.log(`💵 User balance in pool:`, result.data)
+    }
+    if (result.isError) {
+      console.error(`❌ Error fetching balance:`, result.error)
+    }
+  }, [result.data, result.isSuccess, result.isError, result.isLoading, result.error, poolAddress, userAddress])
+  
+  return result
+}
+
+/**
  * Fetch total pool count
  */
 export function usePoolCount() {
