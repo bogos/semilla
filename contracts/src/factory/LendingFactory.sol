@@ -9,10 +9,7 @@ import "./PoolRegistry.sol";
 /**
  * @title LendingFactory
  * @dev Factory for creating and managing multiple independent lending pools
- * TODO: Add access control levels (creator, admin, super-admin)
- * TODO: Implement pool creation fees
- * TODO: Add whitelisting for supported assets
- * TODO: Replace getPoolsByOwner loop with mapping for production efficiency
+ * Supports both ETH and ERC20 tokens
  */
 contract LendingFactory is Ownable {
     // Pool storage
@@ -80,17 +77,17 @@ contract LendingFactory is Ownable {
     
     /**
      * @dev Create a new lending pool
-     * TODO: Add creation fee mechanism
-     * TODO: Add pool initialization parameters
+     * @param isERC20 false = ETH pool, true = ERC20 token pool
      */
     function createPool(
         string memory name,
         address asset,
         uint256 apr,
-        uint16 rifCoverageBp
+        uint16 rifCoverageBp,
+        bool isERC20
     ) external returns (address poolAddress) {
         require(factoryEnabled, "Factory disabled");
-        require(supportedAssets[asset], "Asset not whitelisted");
+        require(supportedAssets[asset] || (!isERC20 && asset == address(0)), "Asset not whitelisted");
         require(apr > 0 && apr <= 100, "Invalid APR");
         require(rifCoverageBp <= 10000, "Invalid RIF coverage");
         require(bytes(name).length > 0, "Name required");
@@ -99,8 +96,11 @@ contract LendingFactory is Ownable {
         LendingPool newPool = new LendingPool();
         poolAddress = address(newPool);
         
+        // Determine asset (0x0 for ETH)
+        address actualAsset = isERC20 ? asset : address(0);
+        
         // Initialize pool with configuration
-        newPool.initialize(name, asset, msg.sender, apr, rifCoverageBp);
+        newPool.initialize(name, actualAsset, msg.sender, apr, rifCoverageBp, isERC20);
         
         // Store configuration
         allPools.push(poolAddress);
@@ -109,7 +109,7 @@ contract LendingFactory is Ownable {
         
         PoolConfig memory config = PoolConfig({
             name: name,
-            asset: asset,
+            asset: actualAsset,
             rifCoverageBp: rifCoverageBp,
             createdAt: uint32(block.timestamp)
         });
@@ -117,9 +117,9 @@ contract LendingFactory is Ownable {
         poolConfigs[poolAddress] = config;
         
         // Register in registry
-        poolRegistry.registerPool(poolAddress, msg.sender, name, asset);
+        poolRegistry.registerPool(poolAddress, msg.sender, name, actualAsset);
         
-        emit PoolCreated(poolAddress, msg.sender, name, asset);
+        emit PoolCreated(poolAddress, msg.sender, name, actualAsset);
         
         return poolAddress;
     }

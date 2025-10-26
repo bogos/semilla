@@ -67,9 +67,11 @@ DEPLOY_OUTPUT=$(forge script script/Deploy.s.sol:Deploy \
     --private-key $PRIVATE_KEY 2>&1)
 
 # Extract addresses from deployment output
-POOL_REGISTRY=$(echo "$DEPLOY_OUTPUT" | grep "PoolRegistry deployed at:" | tail -1 | grep -oE '0x[a-fA-F0-9]{40}')
-LENDING_FACTORY=$(echo "$DEPLOY_OUTPUT" | grep "LendingFactory deployed at:" | tail -1 | grep -oE '0x[a-fA-F0-9]{40}')
-IDENTITY_VERIFIER=$(echo "$DEPLOY_OUTPUT" | grep "IdentityVerifier deployed at:" | tail -1 | grep -oE '0x[a-fA-F0-9]{40}')
+POOL_REGISTRY=$(echo "$DEPLOY_OUTPUT" | grep "PoolRegistry:" | grep -oE '0x[a-fA-F0-9]{40}')
+LENDING_FACTORY=$(echo "$DEPLOY_OUTPUT" | grep "LendingFactory:" | grep -oE '0x[a-fA-F0-9]{40}')
+IDENTITY_VERIFIER=$(echo "$DEPLOY_OUTPUT" | grep "IdentityVerifier:" | grep -oE '0x[a-fA-F0-9]{40}')
+MOCK_USDC=$(echo "$DEPLOY_OUTPUT" | grep "MockUSDC:" | grep -oE '0x[a-fA-F0-9]{40}')
+MOCK_USX=$(echo "$DEPLOY_OUTPUT" | grep "MockUSX:" | grep -oE '0x[a-fA-F0-9]{40}')
 
 if [ -z "$POOL_REGISTRY" ] || [ -z "$LENDING_FACTORY" ] || [ -z "$IDENTITY_VERIFIER" ]; then
     echo -e "${RED}❌ Failed to extract contract addresses${NC}"
@@ -83,37 +85,62 @@ echo -e "  ${BLUE}PoolRegistry: $POOL_REGISTRY${NC}"
 echo -e "  ${BLUE}LendingFactory: $LENDING_FACTORY${NC}"
 echo -e "  ${BLUE}IdentityVerifier: $IDENTITY_VERIFIER${NC}"
 
-# Whitelist ETH as supported asset
-echo -e "\n${YELLOW}[3/5] Whitelisting ETH as supported asset...${NC}"
-ASSET_ADDRESS="0x0000000000000000000000000000000000000000"
-TX=$(cast send $LENDING_FACTORY "whitelistAsset(address)" $ASSET_ADDRESS \
-    --rpc-url $RPC_URL \
-    --private-key $PRIVATE_KEY 2>&1 | grep -E "transactionHash|0x[a-fA-F0-9]{64}")
-echo -e "${GREEN}✓ Asset whitelisted${NC}"
+# Whitelist assets (already done in Deploy.s.sol)
+echo -e "\n${YELLOW}[3/5] Assets whitelisting complete...${NC}"
+echo -e "${GREEN}✓ ETH whitelisted${NC}"
+echo -e "${GREEN}✓ MockUSDC whitelisted${NC}"
+echo -e "${GREEN}✓ MockUSX whitelisted${NC}"
 
-# Create test pool
-echo -e "\n${YELLOW}[4/5] Creating test lending pool...${NC}"
-POOL_NAME="Semilla Test Pool"
+# Create test pool with ETH
+echo -e "\n${YELLOW}[4/5] Creating test lending pools...${NC}"
+
+# Create ETH pool
+echo -e "${BLUE}Creating ETH pool...${NC}"
+POOL_NAME="Semilla ETH Pool"
 APR=8
 RIF_COVERAGE=2000
+ETH_ADDRESS="0x0000000000000000000000000000000000000000"
+IS_ERC20="false"
 
 POOL_TX=$(cast send $LENDING_FACTORY \
-    "createPool(string,address,uint256,uint16)" \
+    "createPool(string,address,uint256,uint16,bool)" \
     "$POOL_NAME" \
-    $ASSET_ADDRESS \
+    $ETH_ADDRESS \
     $APR \
     $RIF_COVERAGE \
+    $IS_ERC20 \
     --rpc-url $RPC_URL \
     --private-key $PRIVATE_KEY 2>&1)
 
-echo -e "${GREEN}✓ Pool created:${NC}"
+echo -e "${GREEN}✓ ETH Pool created:${NC}"
 echo -e "  ${BLUE}Name: $POOL_NAME${NC}"
 echo -e "  ${BLUE}APR: $APR%${NC}"
 echo -e "  ${BLUE}RIF Coverage: $((RIF_COVERAGE / 100))%${NC}"
 
-# Get created pool address
-CREATED_POOLS=$(cast call $LENDING_FACTORY "getAllPools()" --rpc-url $RPC_URL)
-echo -e "  ${BLUE}Pools: $CREATED_POOLS${NC}"
+# Create USDC pool
+echo -e "${BLUE}Creating USDC pool...${NC}"
+POOL_NAME2="Semilla USDC Pool"
+IS_ERC20_TRUE="true"
+
+POOL_TX2=$(cast send $LENDING_FACTORY \
+    "createPool(string,address,uint256,uint16,bool)" \
+    "$POOL_NAME2" \
+    $MOCK_USDC \
+    $APR \
+    $RIF_COVERAGE \
+    $IS_ERC20_TRUE \
+    --rpc-url $RPC_URL \
+    --private-key $PRIVATE_KEY 2>&1)
+
+echo -e "${GREEN}✓ USDC Pool created:${NC}"
+echo -e "  ${BLUE}Name: $POOL_NAME2${NC}"
+echo -e "  ${BLUE}APR: $APR%${NC}"
+echo -e "  ${BLUE}RIF Coverage: $((RIF_COVERAGE / 100))%${NC}"
+
+# Get created pool addresses
+echo -e "\n${BLUE}Getting deployed pools...${NC}"
+POOLS_ARRAY=$(cast call $LENDING_FACTORY "getAllPools()" --rpc-url $RPC_URL)
+echo -e "  ${BLUE}Deployed pools: $POOLS_ARRAY${NC}"
 
 # Update frontend environment variables
 echo -e "\n${YELLOW}[5/5] Updating frontend environment variables...${NC}"
@@ -126,6 +153,8 @@ cat > $ENV_FILE << EOF
 VITE_POOL_REGISTRY_ADDRESS=$POOL_REGISTRY
 VITE_LENDING_FACTORY_ADDRESS=$LENDING_FACTORY
 VITE_IDENTITY_VERIFIER_ADDRESS=$IDENTITY_VERIFIER
+VITE_MOCK_USDC_ADDRESS=$MOCK_USDC
+VITE_MOCK_USX_ADDRESS=$MOCK_USX
 
 # Network Configuration
 VITE_RPC_URL=$RPC_URL
@@ -153,21 +182,40 @@ ${BLUE}Network Info:${NC}
   Chain ID: $CHAIN_ID
   Deployer: $DEPLOYER
 
+${BLUE}Frontend Configuration:${NC}
+  Automatically updated: $ENV_FILE
+
+${BLUE}Created Pools:${NC}
+  1. Semilla ETH Pool (Native ETH)
+  2. Semilla USDC Pool (MockUSDC ERC20)
+
 ${BLUE}Next Steps:${NC}
-1. Start the frontend:
+1. In a new terminal, start the frontend:
    cd $FRONTEND_DIR
    pnpm dev
 
-2. Connect to MetaMask:
+2. Connect MetaMask:
    - Add Localhost network (RPC: $RPC_URL, Chain ID: $CHAIN_ID)
-   - Import a test account from Anvil
+   - Import a test account from Anvil output
+   - Switch to Localhost network
 
-3. Visit http://localhost:5173 and test the application
+3. Open http://localhost:5173 and:
+   - Connect your wallet
+   - Browse the test pools
+   - Deposit funds
+   - Request loans
+   - Repay loans
 
-${YELLOW}ℹ️  To create more pools, use:${NC}
+${YELLOW}ℹ️  To create more pools manually, use:${NC}
    cast send $LENDING_FACTORY \\
-     "createPool(string,address,uint256,uint16)" \\
-     "Pool Name" "0x0000000000000000000000000000000000000000" 8 2000 \\
+     "createPool(string,address,uint256,uint16,bool)" \\
+     "Pool Name" "0x0000000000000000000000000000000000000000" 8 2000 true \\
+     --rpc-url $RPC_URL \\
+     --private-key $PRIVATE_KEY
+
+${YELLOW}ℹ️  To deposit funds to a pool:${NC}
+   cast send POOL_ADDRESS "deposit(uint256)" 1000000000000000000 \\
+     --value 1000000000000000000 \\
      --rpc-url $RPC_URL \\
      --private-key $PRIVATE_KEY
 

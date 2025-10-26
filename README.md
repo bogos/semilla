@@ -20,10 +20,9 @@ semilla/
 
 ## Documentación
 
-- **[Guía Rápida](./docs/GUIA_RAPIDA.md)** - Configuración local en 5 minutos
-- **[Guía de Despliegue](./docs/GUIA_DESPLIEGUE.md)** - Despliegue completo y configuración
-- **[Pool Architecture](./docs/POOL_ARCHITECTURE.md)** - Arquitectura, ejemplos y flujo completo
-- **[Deployment](./docs/DEPLOYMENT.md)** - Instrucciones para deploy a Scroll Sepolia
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Deployment local (Anvil) y Scroll Sepolia
+- **[Pool Architecture](./docs/POOL_ARCHITECTURE.md)** - Arquitectura de pools, ejemplos y flujo completo
+- **[Quick Start](./docs/GUIA_RAPIDA.md)** - Setup local en 5 minutos (legacy)
 
 ## Getting Started
 (Coming soon)

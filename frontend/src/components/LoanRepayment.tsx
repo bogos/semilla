@@ -11,13 +11,13 @@ interface LoanRepaymentProps {
 }
 
 export default function LoanRepayment({ poolAddress, poolName }: LoanRepaymentProps) {
-  const { address, isConnected } = useAccount()
+  const { isConnected } = useAccount()
   const [showRepayModal, setShowRepayModal] = useState(false)
   const [repayAmount, setRepayAmount] = useState('')
 
   // Obtener info del préstamo del usuario
-  const { data: loanAmount, isLoading: isLoadingLoan } = useUserLoanInfo(poolAddress)
-  const { data: aprData, isLoading: isLoadingAPR } = usePoolAPR(poolAddress)
+  const { data: loanAmount } = useUserLoanInfo(poolAddress)
+  const { data: aprData } = usePoolAPR(poolAddress)
   const { repayLoan, isPending: isRepaying, isSuccess: isRepaySucess } = useRepayLoan(poolAddress)
 
   // Convertir datos

@@ -3,6 +3,7 @@ import { useAccount } from 'wagmi'
 import { Address } from 'viem'
 import Tooltip from './Tooltip'
 import { useDeposit, useLoanRequest } from '../hooks/usePoolWrite'
+import { Toast, ToastType } from './Toast'
 
 interface Pool {
   id: string
@@ -29,7 +30,8 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
   const [showBorrowModal, setShowBorrowModal] = useState(false)
   const [depositAmount, setDepositAmount] = useState('')
   const [borrowAmount, setBorrowAmount] = useState('')
-  const [estimatedDays, setEstimatedDays] = useState(365)
+  const [estimatedDays, setEstimatedDays] = useState(30)
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
   
   // Deposit hook
   const { deposit, isPending: isDepositPending, isSuccess: isDepositSuccess } = useDeposit(poolAddress)
@@ -47,6 +49,13 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
 
   return (
     <>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <div className={`flex ${size === 'large' ? 'gap-6' : 'gap-2'}`}>
         <button
           onClick={() => setShowDepositModal(true)}
@@ -130,7 +139,7 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
               onClick={() => {
                 setShowDepositModal(false)
                 setDepositAmount('')
-                setEstimatedDays(365)
+                setEstimatedDays(30)
               }}
               className="flex-1 px-4 py-2 bg-gray-200 text-dark rounded-lg font-semibold hover:bg-gray-300 transition"
             >
@@ -150,7 +159,11 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
                 if (isDepositSuccess) {
                   setShowDepositModal(false)
                   setDepositAmount('')
-                  setEstimatedDays(365)
+                  setEstimatedDays(30)
+                  setToast({
+                    message: `✓ Depósito de ${depositAmount} ${pool.asset} realizado exitosamente`,
+                    type: 'success',
+                  })
                 }
               }}
               disabled={isDepositPending}
@@ -172,27 +185,88 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
           className="bg-white rounded-lg p-8 max-w-md w-full mx-4"
           onClick={e => e.stopPropagation()}
         >
-          <h2 className="text-2xl font-bold text-primary mb-4">Solicitar Préstamo</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-primary">Solicitar Préstamo</h2>
+            <button
+              onClick={() => setShowBorrowModal(false)}
+              disabled={isLoanPending}
+              className="text-gray-400 hover:text-gray-600 disabled:opacity-50 text-2xl"
+            >
+              ✕
+            </button>
+          </div>
+          
           <div className="mb-4">
             <label className="block text-sm font-semibold text-dark mb-2">Monto del Préstamo ({pool.asset})</label>
             <input
               type="number"
+              step="0.01"
               value={borrowAmount}
               onChange={e => setBorrowAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
+              disabled={isLoanPending}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary disabled:bg-gray-100"
             />
           </div>
-          <div className="mb-4 p-4 bg-yellow-50 rounded-lg">
-            <p className="text-sm text-yellow-800">⚠️ Requiere verificación de identidad mediante ZK Proof</p>
+          
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-dark mb-2">Plazo (Días)</label>
+            <input
+              type="number"
+              min="1"
+              max="365"
+              value={estimatedDays}
+              onChange={e => setEstimatedDays(Math.max(1, parseInt(e.target.value) || 1))}
+              disabled={isLoanPending}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary disabled:bg-gray-100"
+            />
+            <p className="text-xs text-gray-600 mt-1">Entre 1 y 365 días</p>
           </div>
+          
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-primary mb-3 text-sm">📊 Detalles del Préstamo</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tasa APR:</span>
+                <span className="font-semibold text-accent">{pool.apr}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Interés estimado:</span>
+                <span className="font-semibold text-blue-600">
+                  {borrowAmount
+                    ? ((parseFloat(borrowAmount) * pool.apr * estimatedDays) / 36500).toFixed(4)
+                    : '0.0000'}
+                  {' '}{pool.asset}
+                </span>
+              </div>
+              <div className="border-t border-blue-200 pt-2 flex justify-between">
+                <span className="font-semibold text-gray-700">Total a pagar:</span>
+                <span className="font-semibold text-lg text-blue-600">
+                  {borrowAmount
+                    ? (
+                        parseFloat(borrowAmount) +
+                        (parseFloat(borrowAmount) * pool.apr * estimatedDays) / 36500
+                      ).toFixed(4)
+                    : '0.0000'}
+                  {' '}{pool.asset}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mb-4 p-4 bg-yellow-50 rounded-lg">
+            <p className="text-sm text-yellow-800">ℹ️ El préstamo se aprobará a través del sistema de jury del pool. Los fondos se transferirán una vez aprobado.</p>
+          </div>
+          
           <div className="flex gap-3">
             <button
               onClick={() => {
                 setShowBorrowModal(false)
                 setBorrowAmount('')
+                setEstimatedDays(30)
               }}
-              className="flex-1 px-4 py-2 bg-gray-200 text-dark rounded-lg font-semibold hover:bg-gray-300 transition"
+              disabled={isLoanPending}
+              className="flex-1 px-4 py-2 bg-gray-200 text-dark rounded-lg font-semibold hover:bg-gray-300 transition disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -202,18 +276,23 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
                   alert('Por favor conecta tu wallet')
                   return
                 }
-                if (!borrowAmount) {
-                  alert('Por favor ingresa un monto')
+                if (!borrowAmount || parseFloat(borrowAmount) <= 0) {
+                  alert('Por favor ingresa un monto válido')
                   return
                 }
-                await requestLoan(borrowAmount)
+                await requestLoan(borrowAmount, estimatedDays)
                 if (isLoanSuccess) {
                   setShowBorrowModal(false)
                   setBorrowAmount('')
+                  setEstimatedDays(30)
+                  setToast({
+                    message: `✓ Solicitud de préstamo por ${borrowAmount} ${pool.asset} enviada al jury. Espera la aprobación.`,
+                    type: 'success',
+                  })
                 }
               }}
               disabled={isLoanPending}
-              className="flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoanPending ? 'Solicitando...' : 'Solicitar'}
             </button>

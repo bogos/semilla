@@ -32,21 +32,41 @@ contract Deploy is Script {
         IdentityVerifier identityVerifier = new IdentityVerifier();
         console.log("4. IdentityVerifier deployed at:", address(identityVerifier));
         
+        // Step 5: Deploy Mock Tokens
+        MockUSDC mockUSDC = new MockUSDC();
+        MockUSX mockUSX = new MockUSX();
+        console.log("5. MockUSDC deployed at:", address(mockUSDC));
+        console.log("6. MockUSX deployed at:", address(mockUSX));
+        
+        // Step 6: Whitelist Assets in Factory
+        // ETH is native (0x0)
+        address ethAddress = address(0);
+        lendingFactory.whitelistAsset(ethAddress);
+        console.log("7. ETH whitelisted");
+        
+        // Whitelist ERC20 tokens
+        lendingFactory.whitelistAsset(address(mockUSDC));
+        console.log("8. MockUSDC whitelisted at:", address(mockUSDC));
+        
+        lendingFactory.whitelistAsset(address(mockUSX));
+        console.log("9. MockUSX whitelisted at:", address(mockUSX));
+        
         console.log("\n=== Deployment Complete ===");
         console.log("\nContract Addresses:");
-        console.log("- PoolRegistry:", address(poolRegistry));
-        console.log("- LendingFactory:", address(lendingFactory));
-        console.log("- IdentityVerifier:", address(identityVerifier));
-        console.log("- MockUSDC:", address(mockUSDC));
-        console.log("- MockUSX:", address(mockUSX));
+        console.log("PoolRegistry:", address(poolRegistry));
+        console.log("LendingFactory:", address(lendingFactory));
+        console.log("IdentityVerifier:", address(identityVerifier));
+        console.log("MockUSDC:", address(mockUSDC));
+        console.log("MockUSX:", address(mockUSX));
         console.log("\nToken Info:");
-        console.log("- MockUSDC Balance (deployer):", mockUSDC.balanceOf(msg.sender), "(6 decimals)");
-        console.log("- MockUSX Balance (deployer):", mockUSX.balanceOf(msg.sender), "(6 decimals)");
+        console.log("MockUSDC Balance (deployer):", mockUSDC.balanceOf(msg.sender), "(6 decimals)");
+        console.log("MockUSX Balance (deployer):", mockUSX.balanceOf(msg.sender), "(6 decimals)");
         
         console.log("\nNext Steps:");
-        console.log("1. Set VITE_POOL_REGISTRY_ADDRESS and VITE_LENDING_FACTORY_ADDRESS in .env.local");
-        console.log("2. Whitelist assets in LendingFactory: factory.whitelistAsset(address asset)");
-        console.log("3. Create pools: factory.createPool(name, asset, apr, rifCoverageBp)");
+        console.log("1. Copy contract addresses to frontend .env.local");
+        console.log("2. Create pools using factory.createPool(name, asset, apr, rifCoverageBp, isERC20)");
+        console.log("3. Start frontend: cd frontend && pnpm dev");
+        console.log("4. Connect MetaMask and test the application");
 
         vm.stopBroadcast();
     }

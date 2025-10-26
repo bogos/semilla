@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import { Address } from 'viem'
 import ConnectWallet from '../components/ConnectWallet'
 import Tooltip from '../components/Tooltip'
 import { useCreatePool } from '../hooks/usePoolWrite'
+import { Toast, ToastType } from '../components/Toast'
 
 export default function CreatePool() {
   const navigate = useNavigate()
@@ -18,38 +19,51 @@ export default function CreatePool() {
     imageUrl: '',
   })
   const [copied, setCopied] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
   const { createPool, isPending: isCreating, isSuccess, hash } = useCreatePool()
+
+  // Show toast when pool is created successfully
+  useEffect(() => {
+    if (isSuccess && hash) {
+      setToast({
+        message: `✓ Pool creado exitosamente! Hash: ${hash.slice(0, 10)}...`,
+        type: 'success',
+      })
+    }
+  }, [isSuccess, hash])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isConnected) {
-      alert('Por favor conecta tu wallet')
+      setToast({ message: 'Por favor conecta tu wallet', type: 'warning' })
       return
     }
     
     try {
-      // Convertir asset a address (usar 0x0 para ETH)
+      // Convertir asset a address y determinar si es ERC20
       let assetAddress: Address = '0x0000000000000000000000000000000000000000'
+      let isERC20 = false
+      
       if (formData.asset === 'USDC') {
         assetAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' // Sepolia USDC
+        isERC20 = true
       } else if (formData.asset === 'USX') {
         assetAddress = '0x0000000000000000000000000000000000000001' // Placeholder
+        isERC20 = true
       }
+      // ETH stays as 0x0 and isERC20 = false
       
       await createPool(
         formData.name,
         assetAddress,
         formData.apr,
-        formData.rifCoverage * 100 // Convertir a basis points (20% = 2000)
+        formData.rifCoverage * 100, // Convertir a basis points (20% = 2000)
+        isERC20
       )
       
-      if (isSuccess) {
-        alert('Pool creado exitosamente!')
-        navigate('/pools')
-      }
     } catch (error) {
       console.error('Error creando pool:', error)
-      alert('Error al crear el pool')
+      setToast({ message: 'Error al crear el pool', type: 'error' })
     }
   }
 
@@ -83,6 +97,13 @@ export default function CreatePool() {
 
   return (
     <div className="min-h-screen" style={{background: 'linear-gradient(to bottom right, #A8D5BA, #E8F0D9)'}}>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">

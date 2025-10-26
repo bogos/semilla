@@ -6,12 +6,6 @@ import ConnectWallet from '../components/ConnectWallet'
 import { useActivePools } from '../hooks/usePoolData'
 import { Address } from 'viem'
 
-const tokenIcons: { [key: string]: string } = {
-  USDC: '/assets/usdc_icon.svg',
-  USX: '/assets/usx_icon.jpg',
-  ETH: '/assets/eth_icon.svg',
-}
-
 interface Pool {
   id: string
   address: Address
