@@ -1,6 +1,52 @@
 import { useReadContract } from 'wagmi'
-import { LENDING_POOL_ABI } from '../config/contracts'
+import { LENDING_POOL_ABI, POOL_REGISTRY_ABI, CONTRACTS } from '../config/contracts'
 import { Address } from 'viem'
+
+export interface PoolData {
+  pool: Address
+  owner: Address
+  name: string
+  asset: Address
+  createdAt: number
+  active: boolean
+}
+
+/**
+ * Fetch all active pools from the registry
+ */
+export function useActivePools() {
+  return useReadContract({
+    address: CONTRACTS.POOL_REGISTRY,
+    abi: POOL_REGISTRY_ABI,
+    functionName: 'getActivePools',
+  })
+}
+
+/**
+ * Fetch metadata for a specific pool
+ */
+export function usePoolMetadata(poolAddress: Address | undefined) {
+  return useReadContract({
+    address: CONTRACTS.POOL_REGISTRY,
+    abi: POOL_REGISTRY_ABI,
+    functionName: 'getPoolMetadata',
+    args: poolAddress ? [poolAddress] : undefined,
+    query: {
+      enabled: !!poolAddress,
+    },
+  })
+}
+
+/**
+ * Fetch total pool count
+ */
+export function usePoolCount() {
+  return useReadContract({
+    address: CONTRACTS.POOL_REGISTRY,
+    abi: POOL_REGISTRY_ABI,
+    functionName: 'getPoolCount',
+  })
+}
 
 export function usePoolStats(poolAddress: Address) {
   const { data: stats, isLoading, error } = useReadContract({

@@ -12,21 +12,33 @@ export const CONTRACTS = {
 // Pool Registry ABI
 export const POOL_REGISTRY_ABI = [
   {
-    name: 'getPools',
+    name: 'getActivePools',
     outputs: [{ type: 'address[]' }],
     stateMutability: 'view',
     type: 'function',
   },
   {
-    name: 'getPoolInfo',
+    name: 'getPoolMetadata',
     inputs: [{ name: 'pool', type: 'address' }],
     outputs: [
-      { name: 'name', type: 'string' },
-      { name: 'asset', type: 'address' },
-      { name: 'apr', type: 'uint256' },
-      { name: 'rifCoverage', type: 'uint256' },
-      { name: 'active', type: 'bool' },
+      {
+        type: 'tuple',
+        components: [
+          { name: 'pool', type: 'address' },
+          { name: 'owner', type: 'address' },
+          { name: 'name', type: 'string' },
+          { name: 'asset', type: 'address' },
+          { name: 'createdAt', type: 'uint32' },
+          { name: 'active', type: 'bool' },
+        ],
+      },
     ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    name: 'getPoolCount',
+    outputs: [{ type: 'uint256' }],
     stateMutability: 'view',
     type: 'function',
   },
