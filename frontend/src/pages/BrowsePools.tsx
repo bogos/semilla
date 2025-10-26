@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PoolCard from '../components/PoolCard'
+import ConnectWallet from '../components/ConnectWallet'
 
 interface Pool {
   id: string
@@ -91,9 +92,7 @@ export default function BrowsePools() {
             <button className="px-6 py-2 text-primary font-semibold hover:text-opacity-80">
               Create Pool
             </button>
-            <button className="px-6 py-2 bg-accent text-dark rounded-lg font-semibold hover:bg-opacity-90 transition">
-              Connect Wallet
-            </button>
+            <ConnectWallet />
           </div>
         </div>
       </header>
