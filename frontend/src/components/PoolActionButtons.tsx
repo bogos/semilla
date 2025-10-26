@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
-import { Address, parseEther } from 'viem'
+import { Address } from 'viem'
 import Tooltip from './Tooltip'
 import { useDeposit, useLoanRequest, useRepayLoan } from '../hooks/usePoolWrite'
 import { useApproveToken } from '../hooks/useApproveToken'
@@ -44,12 +44,12 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
   
   // Approve hook
   const { approve: approveToken, isPending: isApprovingToken, isSuccess: isApproveSuccess } = useApproveToken(
-    tokenAddress as Address | undefined,
+    tokenAddress as Address,
     poolAddress
   )
   
   // Deposit hook
-  const { deposit, isPending: isDepositPending, isSuccess: isDepositSuccess } = useDeposit(poolAddress)
+  const { deposit, isPending: isDepositPending } = useDeposit(poolAddress)
   
   // Loan request hook
   const { createLoan: requestLoan, isPending: isLoanPending, isSuccess: isLoanSuccess } = useLoanRequest(poolAddress)

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAccount } from 'wagmi'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { formatUnits } from 'viem'
 import PoolActionButtons from './PoolActionButtons'
 import Tooltip from './Tooltip'
