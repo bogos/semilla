@@ -3,6 +3,7 @@ import Home from './pages/Home'
 import BrowsePools from './pages/BrowsePools'
 import PoolDetail from './pages/PoolDetail'
 import Dashboard from './pages/Dashboard'
+import CreatePool from './pages/CreatePool'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/pools" element={<BrowsePools />} />
         <Route path="/pool/:poolId" element={<PoolDetail />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/create-pool" element={<CreatePool />} />
       </Routes>
     </BrowserRouter>
   )

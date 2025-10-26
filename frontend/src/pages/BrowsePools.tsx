@@ -87,7 +87,10 @@ export default function BrowsePools() {
             <h1 className="text-2xl font-bold text-primary">Semilla</h1>
           </button>
           <div className="flex gap-4">
-            <button className="px-6 py-2 text-primary font-semibold hover:text-opacity-80">
+            <button
+              onClick={() => navigate('/create-pool')}
+              className="px-6 py-2 text-primary font-semibold hover:text-opacity-80"
+            >
               Create Pool
             </button>
             <button
