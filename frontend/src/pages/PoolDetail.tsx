@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Tooltip from '../components/Tooltip'
 import PoolActionButtons from '../components/PoolActionButtons'
+import LoanRepayment from '../components/LoanRepayment'
 import ConnectWallet from '../components/ConnectWallet'
 
 // Token icons mapping
@@ -297,9 +298,13 @@ export default function PoolDetail() {
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-bold text-primary mb-4">Tu Participación</h3>
-            <div className="space-y-3">
+            
+            {/* Componente de Reembolso */}
+            <LoanRepayment poolAddress={pool.address as any} poolName={pool.name} />
+            
+            {/* Info adicional */}
+            <div className="space-y-3 mt-4">
               <p><span className="text-gray-600">Tus Depósitos:</span> <span className="font-semibold">$0.00</span></p>
-              <p><span className="text-gray-600">Tus Préstamos:</span> <span className="font-semibold">$0.00</span></p>
               <p><span className="text-gray-600">Intereses Ganados:</span> <span className="font-semibold text-green-600">$0.00</span></p>
             </div>
           </div>

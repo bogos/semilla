@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAccount } from 'wagmi'
+import { Address } from 'viem'
 import ConnectWallet from '../components/ConnectWallet'
 import Tooltip from '../components/Tooltip'
+import { useCreatePool } from '../hooks/usePoolWrite'
 
 export default function CreatePool() {
   const navigate = useNavigate()
@@ -15,7 +17,7 @@ export default function CreatePool() {
     description: '',
     imageUrl: '',
   })
-  const [isCreating, setIsCreating] = useState(false)
+  const { createPool, isPending: isCreating, isSuccess, hash } = useCreatePool()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,13 +25,31 @@ export default function CreatePool() {
       alert('Por favor conecta tu wallet')
       return
     }
-    setIsCreating(true)
-    // TODO: Call createPool contract function
-    setTimeout(() => {
-      alert('Pool creado exitosamente!')
-      setIsCreating(false)
-      navigate('/pools')
-    }, 2000)
+    
+    try {
+      // Convertir asset a address (usar 0x0 para ETH)
+      let assetAddress: Address = '0x0000000000000000000000000000000000000000'
+      if (formData.asset === 'USDC') {
+        assetAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' // Sepolia USDC
+      } else if (formData.asset === 'USX') {
+        assetAddress = '0x0000000000000000000000000000000000000001' // Placeholder
+      }
+      
+      await createPool(
+        formData.name,
+        assetAddress,
+        formData.apr,
+        formData.rifCoverage * 100 // Convertir a basis points (20% = 2000)
+      )
+      
+      if (isSuccess) {
+        alert('Pool creado exitosamente!')
+        navigate('/pools')
+      }
+    } catch (error) {
+      console.error('Error creando pool:', error)
+      alert('Error al crear el pool')
+    }
   }
 
   if (!isConnected) {
@@ -255,6 +275,9 @@ export default function CreatePool() {
                   >
                     {isCreating ? 'Creando Pool...' : 'Crear Pool'}
                   </button>
+                  {hash && (
+                    <p className="text-xs text-gray-600 mt-2">Transacción: {hash}</p>
+                  )}
                 </div>
               </form>
             </div>

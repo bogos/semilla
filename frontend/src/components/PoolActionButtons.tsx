@@ -34,7 +34,7 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small' }:
   const { deposit, isPending: isDepositPending, isSuccess: isDepositSuccess } = useDeposit(poolAddress)
   
   // Loan request hook
-  const { requestLoan, isPending: isLoanPending, isSuccess: isLoanSuccess } = useLoanRequest(poolAddress)
+  const { createLoan: requestLoan, isPending: isLoanPending, isSuccess: isLoanSuccess } = useLoanRequest(poolAddress)
 
   const calculateEarnings = (amount: number, days: number, apr: number) => {
     if (!amount || amount <= 0) return 0

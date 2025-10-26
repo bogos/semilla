@@ -1,9 +1,9 @@
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { LENDING_POOL_ABI } from '../config/contracts'
-import { Address, parseUnits } from 'viem'
+import { LENDING_POOL_ABI, LENDING_FACTORY_ABI, CONTRACTS } from '../config/contracts'
+import { Address, parseEther, parseUnits } from 'viem'
 
 /**
- * Hook to deposit funds into a lending pool
+ * Hook para depositar ETH en un pool de préstamos
  */
 export function useDeposit(poolAddress: Address) {
   const { writeContract, data: hash, isPending, error } = useWriteContract()
@@ -11,17 +11,17 @@ export function useDeposit(poolAddress: Address) {
     hash,
   })
 
-  const deposit = async (amount: string, decimals: number = 6) => {
+  const deposit = (amountInEth: string) => {
     try {
-      const parsedAmount = parseUnits(amount, decimals)
+      const valueInWei = parseEther(amountInEth)
       writeContract({
         address: poolAddress,
         abi: LENDING_POOL_ABI,
         functionName: 'deposit',
-        args: [parsedAmount],
+        value: valueInWei,
       })
     } catch (err) {
-      console.error('Error depositing:', err)
+      console.error('Error en depósito:', err)
     }
   }
 
@@ -36,30 +36,140 @@ export function useDeposit(poolAddress: Address) {
 }
 
 /**
- * Hook to request a loan from a lending pool
+ * Hook para retirar ETH de un pool de préstamos
  */
-export function useLoanRequest(poolAddress: Address) {
+export function useWithdraw(poolAddress: Address) {
   const { writeContract, data: hash, isPending, error } = useWriteContract()
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   })
 
-  const requestLoan = async (amount: string, decimals: number = 6) => {
+  const withdraw = (amountInEth: string) => {
     try {
-      const parsedAmount = parseUnits(amount, decimals)
+      const amountInWei = parseEther(amountInEth)
       writeContract({
         address: poolAddress,
         abi: LENDING_POOL_ABI,
-        functionName: 'requestLoan',
-        args: [parsedAmount],
+        functionName: 'withdraw',
+        args: [amountInWei],
       })
     } catch (err) {
-      console.error('Error requesting loan:', err)
+      console.error('Error en retiro:', err)
     }
   }
 
   return {
-    requestLoan,
+    withdraw,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+  }
+}
+
+/**
+ * Hook para crear un préstamo desde un pool
+ */
+export function useCreateLoan(poolAddress: Address) {
+  const { writeContract, data: hash, isPending, error } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  })
+
+  const createLoan = (amountInEth: string) => {
+    try {
+      const amountInWei = parseEther(amountInEth)
+      writeContract({
+        address: poolAddress,
+        abi: LENDING_POOL_ABI,
+        functionName: 'createLoan',
+        args: [amountInWei],
+      })
+    } catch (err) {
+      console.error('Error al crear préstamo:', err)
+    }
+  }
+
+  return {
+    createLoan,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+  }
+}
+
+/**
+ * Hook para reembolsar un préstamo
+ */
+export function useRepayLoan(poolAddress: Address) {
+  const { writeContract, data: hash, isPending, error } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  })
+
+  const repayLoan = (amountInEth: string) => {
+    try {
+      const valueInWei = parseEther(amountInEth)
+      writeContract({
+        address: poolAddress,
+        abi: LENDING_POOL_ABI,
+        functionName: 'repayLoan',
+        value: valueInWei,
+      })
+    } catch (err) {
+      console.error('Error al reembolsar préstamo:', err)
+    }
+  }
+
+  return {
+    repayLoan,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+  }
+}
+
+/**
+ * Hook para solicitar un préstamo (alias de useCreateLoan)
+ */
+export function useLoanRequest(poolAddress: Address) {
+  return useCreateLoan(poolAddress)
+}
+
+/**
+ * Hook para crear un nuevo pool
+ */
+export function useCreatePool() {
+  const { writeContract, data: hash, isPending, error } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  })
+
+  const createPool = (
+    name: string,
+    asset: Address,
+    apr: number,
+    rifCoverageBp: number
+  ) => {
+    try {
+      writeContract({
+        address: CONTRACTS.LENDING_FACTORY,
+        abi: LENDING_FACTORY_ABI,
+        functionName: 'createPool',
+        args: [name, asset, BigInt(apr), BigInt(rifCoverageBp) as any],
+      })
+    } catch (err) {
+      console.error('Error al crear pool:', err)
+    }
+  }
+
+  return {
+    createPool,
     hash,
     isPending,
     isConfirming,

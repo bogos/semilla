@@ -11,19 +11,35 @@ contract Deploy is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        // This is a temporary deployment. In production:
-        // 1. Deploy PoolRegistry with factory placeholder
-        // 2. Deploy LendingFactory with registry address
-        // For now, we'll deploy them manually
+        console.log("\n=== Deploying Semilla Contracts ===");
+        console.log("Deployer:", vm.addr(deployerPrivateKey));
         
-        console.log("Deploy script requires pool creation via factory.");
-        console.log("1. Deploy PoolRegistry: new PoolRegistry(address factory)");
-        console.log("2. Deploy LendingFactory: new LendingFactory(address registry)");
-        console.log("3. Create pool via: factory.createPool(name, asset, apr, rifCoverage)");
-
-        // Deploy IdentityVerifier
+        // Step 1: Deploy PoolRegistry (with factory placeholder address first)
+        PoolRegistry poolRegistry = new PoolRegistry(address(0));
+        console.log("\n1. PoolRegistry deployed at:", address(poolRegistry));
+        
+        // Step 2: Deploy LendingFactory
+        LendingFactory lendingFactory = new LendingFactory(address(poolRegistry));
+        console.log("2. LendingFactory deployed at:", address(lendingFactory));
+        
+        // Step 3: Update PoolRegistry with correct factory address
+        poolRegistry.setFactory(address(lendingFactory));
+        console.log("3. PoolRegistry updated with factory address");
+        
+        // Step 4: Deploy IdentityVerifier
         IdentityVerifier identityVerifier = new IdentityVerifier();
-        console.log("IdentityVerifier deployed at:", address(identityVerifier));
+        console.log("4. IdentityVerifier deployed at:", address(identityVerifier));
+        
+        console.log("\n=== Deployment Complete ===");
+        console.log("\nContract Addresses:");
+        console.log("- PoolRegistry:", address(poolRegistry));
+        console.log("- LendingFactory:", address(lendingFactory));
+        console.log("- IdentityVerifier:", address(identityVerifier));
+        
+        console.log("\nNext Steps:");
+        console.log("1. Set VITE_POOL_REGISTRY_ADDRESS and VITE_LENDING_FACTORY_ADDRESS in .env.local");
+        console.log("2. Whitelist assets in LendingFactory: factory.whitelistAsset(address asset)");
+        console.log("3. Create pools: factory.createPool(name, asset, apr, rifCoverageBp)");
 
         vm.stopBroadcast();
     }

@@ -2,7 +2,9 @@ import { useNavigate } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import ConnectWallet from '../components/ConnectWallet'
 import Tooltip from '../components/Tooltip'
+import LoanRepayment from '../components/LoanRepayment'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
+import { CONTRACTS } from '../config/contracts'
 
 interface UserDeposit {
   poolName: string
@@ -247,8 +249,15 @@ export default function Dashboard() {
           {/* Loans */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-bold text-primary mb-6">Tus Préstamos</h3>
+            
+            {/* Nota: Los préstamos se mostrarán en cada Pool Detail */}
+            <p className="text-sm text-gray-600 text-center py-4">
+              Haz click en un pool para ver y reembolsar tus préstamos activos
+            </p>
+            
+            {/* Préstamos Mockeados (solo para referencia) */}
             {mockLoans.length === 0 ? (
-              <p className="text-gray-600 text-center py-8">No tienes préstamos activos</p>
+              <p className="text-gray-600 text-center py-4">No tienes préstamos activos</p>
             ) : (
               <div className="space-y-3">
                 {mockLoans.map((loan, idx) => {
