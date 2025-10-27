@@ -44,7 +44,7 @@ export default function PoolActionButtons({ pool, poolAddress, size = 'small', c
   
   // Approve hook
   const { approve: approveToken, isPending: isApprovingToken, isSuccess: isApproveSuccess } = useApproveToken(
-    tokenAddress as Address,
+    tokenAddress!,
     poolAddress
   )
   

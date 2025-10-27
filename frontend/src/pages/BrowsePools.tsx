@@ -61,12 +61,12 @@ export default function BrowsePools() {
   
   // Combine real pools with mock data
   const pools = useMemo<Pool[]>(() => {
-    if (!activePoolAddresses || (Array.isArray(activePoolAddresses) && activePoolAddresses.length === 0)) {
+    if (!activePoolAddresses || (Array.isArray(activePoolAddresses) && (activePoolAddresses as Address[]).length === 0)) {
       return [...mockPools]
     }
     
     // Map real pool addresses to Pool interface
-    const poolAddressesArray = Array.isArray(activePoolAddresses) ? activePoolAddresses : []
+    const poolAddressesArray = Array.isArray(activePoolAddresses) ? (activePoolAddresses as Address[]) : []
     const realPools = poolAddressesArray.map((address: Address, index: number) => ({
       id: String(index + 3), // Continue from mock pool IDs (1, 2)
       address,
